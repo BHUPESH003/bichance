@@ -5,6 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.db.init import init_db
 from app.core.logger import logger
+from fastapi.responses import JSONResponse
+from fastapi.requests import Request
 
 
 # Import all routers
@@ -29,14 +31,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+async def root():
+    return {"status": "DinnerConnect API running 🚀"}
 
-# # Register API routes
-# app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
-# app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
-# app.include_router(booking.router, prefix="/api/v1/booking", tags=["Booking"])
-# app.include_router(subscription.router, prefix="/api/v1/subscription", tags=["Subscription"])
-# app.include_router(feedback.router, prefix="/api/v1/feedback", tags=["Feedback"])
-# app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.exception("Unhandled error:")
+    return JSONResponse(status_code=500, content={"error": "Internal Server Error"})
 
 
 app.include_router(api_router)
