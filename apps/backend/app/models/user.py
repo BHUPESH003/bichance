@@ -1,28 +1,36 @@
 from beanie import Document
-from pydantic import EmailStr
+from pydantic import EmailStr, Field, BaseModel
 from typing import Optional, Dict, List
 from datetime import date
 
+class PersonalityAnswer(BaseModel):
+    question: str
+    answer: str
+def default_personality_answers():
+    return [PersonalityAnswer(question="", answer="") for _ in range(15)]
+
 class User(Document):
     email: EmailStr
-    name: Optional[str]
-    mobile: Optional[str]
-    city: Optional[str]
-    country: Optional[str]
-    dob: Optional[date]
-    gender: Optional[str]
-    relationship_status: Optional[str]
-    children: Optional[bool]
-    profession: Optional[str]
-    
-    # New fields
-    personality_answers: Optional[List[str]]  # store 21 answers as string keys
-    personality_scores: Optional[Dict[str, float]]  # O, C, E, A, N
+    name: Optional[str] = ""
+    mobile: Optional[str] = ""
+    city: Optional[str] = ""
+    country: Optional[str] = ""
+    dob: Optional[date] = None
+    gender: Optional[str] = ""
+    relationship_status: Optional[str] = ""
+    children: Optional[bool] = False
+    profession: Optional[str] = ""
+
+    # New fields with safe default
+    personality_answers: List[PersonalityAnswer] = Field(default_factory=default_personality_answers)
+    personality_scores: Optional[Dict[str, float]] = Field(default_factory=dict)
 
     identity_verified: bool = False
     subscription_status: str = "none"
 
-    image_url: Optional[str]  # link to S3 or any image CDN
+    image_url: Optional[str] = None
+    current_country: Optional[str] = ""
+    current_city: Optional[str] = ""
 
     class Settings:
         name = "users"

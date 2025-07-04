@@ -1,0 +1,22 @@
+from pydantic import BaseModel, Field, field_validator
+from app.constants.questionsEnum import QuestionKey
+from typing import Any
+
+
+class SaveJourneyRequest(BaseModel):
+    question_key: QuestionKey = Field(
+        ..., 
+        description="Key of the question being answered",
+        example="q0"
+    )
+    answer: str = Field(
+        ..., 
+        description="Answer to the question. Should be an integer (0/1) for personality questions, or appropriate value for identity/location fields.",
+        example="1"
+    )
+    question: str  # <-- new field
+
+
+class SubmitJourneyResponse(BaseModel):
+    message: str
+    scores: dict

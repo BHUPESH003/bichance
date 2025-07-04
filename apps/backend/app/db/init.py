@@ -12,6 +12,8 @@ from app.models.feedback import Feedback
 from app.models.subscription import Subscription
 from app.models.restaurant import Restaurant
 from app.models.otp import OTP
+from app.models.session import Session
+from app.models.dinner import Dinner, DinnerGroup
 
 async def init_db():
     client = AsyncIOMotorClient(settings.MONGO_URI)
@@ -27,5 +29,8 @@ async def init_db():
             Subscription,
             Restaurant,
             OTP,
+            Session,
+            Dinner,
+            DinnerGroup,
         ]
     )

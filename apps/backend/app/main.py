@@ -7,6 +7,10 @@ from app.db.init import init_db
 from app.core.logger import logger
 from fastapi.responses import JSONResponse
 from fastapi.requests import Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.encoders import jsonable_encoder
+from fastapi.security import HTTPBearer
+
 
 
 # Import all routers
@@ -40,6 +44,16 @@ async def root():
 async def global_exception_handler(request: Request, exc: Exception):
     logger.exception("Unhandled error:")
     return JSONResponse(status_code=500, content={"error": "Internal Server Error"})
-
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=422,
+        content={
+            "code": 422,
+            "message": "Validation failed",
+            "errors": jsonable_encoder(exc.errors()),
+        },
+    )
 
 app.include_router(api_router)
+security_scheme = HTTPBearer()
