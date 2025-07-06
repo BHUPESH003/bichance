@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, field_validator
 from app.constants.questionsEnum import QuestionKey
-from typing import Any
+from typing import Dict
 
 
 class SaveJourneyRequest(BaseModel):
@@ -19,4 +19,4 @@ class SaveJourneyRequest(BaseModel):
 
 class SubmitJourneyResponse(BaseModel):
     message: str
-    scores: dict
+    scores: Dict[str, float]

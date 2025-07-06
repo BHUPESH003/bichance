@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from app.models.user import User
 from app.schemas.journey import SaveJourneyRequest, SubmitJourneyResponse
-from app.services.matchmaking.v1 import mock_personality_scores
+from app.services.matchmaking.v1 import compute_personality_scores
 from app.schemas.response import SuccessResponse
 from app.dependencies.auth import get_current_user  # middleware-based email extraction
 
@@ -71,16 +71,24 @@ async def save_journey(
     elif key.startswith("q") and key[1:].isdigit():
         index = int(key[1:])
         if 0 <= index < 15:
-            # Assume frontend also sends the question string along with the answer
-            question_text = payload.question  # <- add this to your SaveJourneyRequest schema
+            # Map index to trait
+            trait_map = ["O", "C", "E", "A", "N",
+                        "O", "C", "E", "A", "N",
+                        "O", "C", "E", "A", "N"]
+            trait = trait_map[index]
 
+            # Ensure valid list
             if not user.personality_answers or len(user.personality_answers) < 15:
-                user.personality_answers = [None] * 15
+                from app.models.user import PersonalityAnswer  # make sure it's imported
+                user.personality_answers = [
+                    PersonalityAnswer(trait=trait_map[i], question="", answer="") for i in range(15)
+                ]
 
-            user.personality_answers[index] = {
-                "question": question_text,
-                "answer": val
-            }
+            user.personality_answers[index] = PersonalityAnswer(
+                trait=trait,
+                question=payload.question or "",
+                answer=val
+            )
         else:
             raise HTTPException(status_code=400, detail="Invalid question index")
     elif key in {"gender", "relationship_status", "profession", "country"}:
@@ -95,21 +103,19 @@ async def save_journey(
     await user.save()
     return SuccessResponse(message="Answer saved", data={})
 
-@router.post(
-    "/submit",
-    response_model=SuccessResponse[SubmitJourneyResponse],
-    summary="Submit the journey",
-    description="Finalizes the journey and stores the personality scores"
-)
-async def submit_journey(user: str = Depends(get_current_user)):
+
+@router.post("/submit",summary="Submit the journey",
+    description="Finalizes the journey and stores the personality scores", response_model=SuccessResponse[SubmitJourneyResponse])
+async def submit_journey(user: User = Depends(get_current_user)):
     user = await User.find_one(User.email == user.email)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if None in user.personality_answers:
+    if not user.personality_answers or any(a is None or not a.trait for a in user.personality_answers):
         raise HTTPException(status_code=400, detail="Not all personality questions are answered")
 
-    scores = mock_personality_scores(user.personality_answers)
+
+    scores = compute_personality_scores(user.personality_answers)
     user.personality_scores = scores
     await user.save()
 

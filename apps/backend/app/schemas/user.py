@@ -3,6 +3,7 @@ from typing import Optional, List, Dict
 from datetime import date
 
 class PersonalityAnswer(BaseModel):
+    trait: str  # One of "O", "C", "E", "A", "N"
     question: str
     answer: str
 
