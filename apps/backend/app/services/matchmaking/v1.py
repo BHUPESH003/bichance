@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import List, Dict, Tuple
 from itertools import combinations
 import random
@@ -9,6 +10,15 @@ QUESTION_TRAIT_MAP = {
     5: "O", 6: "C", 7: "E", 8: "A", 9: "N",
     10: "O", 11: "C", 12: "E", 13: "A", 14: "N"
 }
+
+def group_users_by_preferences(user_map: Dict):
+    preference_groups = defaultdict(list)
+
+    for user_id, data in user_map.items():
+        key = (data["budget_category"], data["dietary_category"])
+        preference_groups[key].append(data["user"])
+
+    return preference_groups
 def compute_personality_scores(answers: List[PersonalityAnswer]) -> Dict[str, float]:
     scores = {"O": 0, "C": 0, "E": 0, "A": 0, "N": 0}
     trait_counts = {"O": 0, "C": 0, "E": 0, "A": 0, "N": 0}

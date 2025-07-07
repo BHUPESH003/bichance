@@ -3,7 +3,7 @@ from app.models.dinner import  Dinner, DinnerGroup
 from app.schemas.dinner import CreateDinnerRequest, CreateDinnerResponse
 from typing import List, Optional
 from app.schemas.response import SuccessResponse
-from app.services.matchmaking.v1 import run_matchmaking_for_dinner, calculate_group_score
+from app.services.matchmaking.v1 import run_matchmaking_for_dinner, calculate_group_score, group_users_by_preferences
 from app.models.user import User
 from app.utils.send_dinner_match_email import send_dinner_match_email
 from app.dependencies.admin import get_current_admin_user
@@ -16,7 +16,9 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 from app.schemas.venue import CreateVenueRequest, VenueResponse
 from beanie import PydanticObjectId
 import asyncio
-
+import pprint
+from app.core.logger import logger
+from app.core.notifications.producer import queue_notification
 class AdminLoginRequest(BaseModel):
     email: EmailStr
     password: str
@@ -82,6 +84,7 @@ async def get_dinner(dinner_id: str):
     return SuccessResponse(message="Dinner fetched successfully", data=dinner) 
 
 
+
 @router.patch(
     "/dinner-group/{group_id}/venue",
     response_model=SuccessResponse[DinnerGroup]
@@ -101,6 +104,24 @@ async def update_dinner_group_venue(
 
     group.venue_id = payload.venue_id
     await group.save()
+
+    # 📬 Notify all participants in the group
+    for user_id in group.participant_ids:
+        user = await User.get(user_id)
+        if not user:
+            continue
+        queue_notification({
+        "type": "VENUE_UPDATE",
+        "to_email": user.email,
+        "name": user.name or "there",
+        "venue_name": venue.name,
+        "venue_address": venue.address,
+        "city": venue.city,
+        "date": group.date.strftime("%A, %d %B %Y") if hasattr(group, "date") else "your dinner date"
+    })
+
+    return SuccessResponse(message="Venue updated successfully and users notified", data=group)
+
 
     return SuccessResponse(message="Venue updated successfully", data=group)
 @router.post("/run-matching", dependencies=[Depends(get_current_admin_user)])
@@ -131,45 +152,53 @@ async def run_matching(dinner_id: PydanticObjectId):
         }
 
     users = [entry["user"] for entry in user_map.values()]
-    groups = await run_matchmaking_for_dinner(users)
 
-    for group in groups:
-        match_score = calculate_group_score(group)
-        meta = user_map[group[0].id]
+    preference_groups = group_users_by_preferences(user_map)
+    logger.info("Preference groups:\n%s", pprint.pformat(preference_groups))
 
-        dinner_group = DinnerGroup(
-            dinner_id=dinner.id,
-            participant_ids=[u.id for u in group],
-            venue_id=None,
-            budget_category=meta["budget_category"],
-            dietary_category=meta["dietary_category"],
-            match_score=match_score
-        )
-        await dinner_group.insert()
-# Create a mapping from user_id to opt-in metadata
-    opt_in_map = {opt.user_id: opt for opt in dinner.opted_in_users}
 
-    for user in group:
-        opt = opt_in_map.get(user.id)
-        await asyncio.to_thread(
-        send_dinner_match_email,
-        to_email=user.email,
-        name=user.name or "there",
-        date=dinner.date.strftime("%A, %d %B %Y"),
-        time=dinner.date.strftime("%I:%M %p"),
-        city=dinner.city
-    )
+    matched_groups = []
+    for (budget, dietary), user_list in preference_groups.items():
+        if len(user_list) < 6:
+            continue  # Not enough users for a group
+        new_groups = await run_matchmaking_for_dinner(user_list)
+        matched_groups.extend(new_groups)  # accumulate all matched groups
+        for group in new_groups:
+            match_score = calculate_group_score(group)
+
+            dinner_group = DinnerGroup(
+                dinner_id=dinner.id,
+                participant_ids=[u.id for u in group],
+                venue_id=None,
+                budget_category=budget,
+                dietary_category=dietary,
+                match_score=match_score
+            )
+            await dinner_group.insert()
+
+            # # Notify users
+            # for user in group:
+            #     queue_notification({
+            #     "type":"DINNER_UPDATE",
+            #     "to_email":user.email,
+            #     "name":user.name or "there",
+            #     "date":dinner.date.strftime("%A, %d %B %Y"),
+            #     "time":dinner.date.strftime("%I:%M %p"),
+            #     "city":dinner.city
+            #     })
+                
+
 
     dinner.matched = True
     await dinner.save()
 
     return SuccessResponse(message= "Matching complete",data={
-        "summary": {
-            "dinner_id": str(dinner.id),
-            "groups_created": len(groups),
-            "ungrouped_users": len(users) % 6,
-            "status": "matched"
-        }
+            "summary": {
+                "dinner_id": str(dinner.id),
+                "groups_created": len(matched_groups),
+                "ungrouped_users": len(users) % 6,
+                "status": "matched"
+            }
     })
 
 @router.post("/venues", response_model=SuccessResponse[VenueResponse], dependencies=[Depends(get_current_admin_user)])

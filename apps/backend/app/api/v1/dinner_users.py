@@ -1,5 +1,6 @@
 # dinner_routes_user.py
 from fastapi import APIRouter, Depends, HTTPException
+from beanie.operators import In
 from typing import List, Optional
 from datetime import date
 from beanie import PydanticObjectId
@@ -9,6 +10,8 @@ from app.dependencies.auth import get_current_user
 from app.schemas.response import SuccessResponse
 from datetime import datetime, time, timezone, timedelta
 from pydantic import BaseModel
+from bson import ObjectId
+
 class OptInResponse(BaseModel):
     dinner_id: PydanticObjectId
 class OptInRequest(BaseModel):
@@ -60,7 +63,32 @@ async def opt_in_to_dinner(
     )
 
 
-@router.get("/my-bookings", response_model=SuccessResponse[List[DinnerGroup]])
-async def get_user_bookings(user: User = Depends(get_current_user)) -> List[DinnerGroup]:
-    dinners= await DinnerGroup.find(DinnerGroup.participant_ids == user.id).sort("date").to_list()
-    return SuccessResponse(message="Opt-ed in successfully", data={"dinners": dinners})
+@router.get("/my-bookings", response_model=SuccessResponse[List[dict]])
+async def get_user_bookings(user: User = Depends(get_current_user)) -> SuccessResponse:
+    # Step 1: Fetch all dinners where current user is a participant
+    dinners = await DinnerGroup.find(DinnerGroup.participant_ids == user.id).sort("date").to_list()
+    
+    # Step 2: Collect unique participant_ids from all dinners
+    all_participant_ids = {
+        ObjectId(pid) for dinner in dinners for pid in dinner.participant_ids if ObjectId.is_valid(pid)
+    }
+    # Step 3: Fetch users for these ObjectIds
+    participants = await User.find(In(User.id, list(all_participant_ids))).to_list()
+    # Step 4: Map user info
+    participants_dict = {
+        str(u.id): u.model_dump(include={
+            "name", "city", "country", "gender", "profession", "image_url", "identity_verified"
+        }) for u in participants
+    }
+    print("participants_dict",participants_dict)
+    # Step 5: Add participant_details to each dinner group
+    enriched_dinners = []
+    for dinner in dinners:
+        enriched_dinners.append({
+            **dinner.model_dump(),
+            "participant_details": [
+                participants_dict.get(str(pid)) for pid in dinner.participant_ids if str(pid) in participants_dict
+            ]
+        })
+
+    return SuccessResponse(message="Bookings Fetched successfully", data=enriched_dinners)

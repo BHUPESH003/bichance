@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     SMTP_SERVER: str
     SMTP_PORT: int  # ✅ Add this
     STRIPE_SECRET_KEY: str
+    SQS_QUEUE_URL: str
+    AWS_ACCESS_KEY_ID: str
+    AWS_SECRET_ACCESS_KEY: str
+    AWS_REGION: str
 
     class Config:
         env_file = ".env"

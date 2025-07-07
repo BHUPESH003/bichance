@@ -5,7 +5,8 @@ import random
 from app.db.init import init_db
 from app.models.user import User, PersonalityAnswer
 
-first_names = ["Amit", "Sana", "Ravi", "Meera", "Karan", "Priya", "Arjun", "Nisha", "Raj", "Neha"]
+# first_names = ["Amit", "Sana", "Ravi", "Meera", "Karan", "Priya", "Arjun", "Nisha", "Raj", "Neha"]
+first_names = ["Corner McGregor", "Habib", "Nakul Dhull", "neeraj Goyat"]
 cities = ["Gurugram", "Bangalore", "Mumbai", "Delhi"]
 professions = ["Software Engineer", "Designer", "Doctor", "Entrepreneur", "Marketer"]
 genders = ["Male", "Female", "Other"]
@@ -46,7 +47,7 @@ def generate_personality_answers():
 async def create_users():
     await init_db()
 
-    for i in range(20):
+    for i in range(10):
         email = f"user{i}@test.com"
         answers = generate_personality_answers()
 
