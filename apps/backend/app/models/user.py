@@ -32,6 +32,8 @@ class User(Document):
     image_url: Optional[str] = None
     current_country: Optional[str] = ""
     current_city: Optional[str] = ""
+    stripe_customer_id: Optional[str] = Field(default=None)
+
 
     class Settings:
         name = "users"

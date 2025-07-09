@@ -34,5 +34,6 @@ async def init_db():
             DinnerGroup,
             AdminUser,
             Venue,
+            
         ]
     )

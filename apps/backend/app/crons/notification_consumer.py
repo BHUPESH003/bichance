@@ -2,7 +2,7 @@
 import boto3, json, time
 from app.core.config import settings
 from app.services.notifications.email import send_email_using_template
-from app.services.email import send_venue_update_email
+from app.services.email import send_venue_update_email, send_subscription_email
 from app.utils.send_dinner_match_email import send_dinner_match_email
 
 sqs = boto3.client(
@@ -46,7 +46,11 @@ def consume():
                         time=body["time"],
                         city=body["city"]
                         )
-
+                if(body.get("type") == "SUBSCRIPTION_EMAIL"):    
+                    send_subscription_email(
+                        to_email=body["to_email"],
+                        status=body["status"]
+                    )
                     sqs.delete_message(
                         QueueUrl=settings.SQS_QUEUE_URL,
                         ReceiptHandle=msg["ReceiptHandle"]

@@ -3,6 +3,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from app.core.config import settings
 from app.core.logger import logger  # If using your logger setup
+from smtplib import SMTP
 
 def send_otp_email(to_email: str, otp: str):
     try:
@@ -88,3 +89,24 @@ def send_email_raw(to_email: str, subject: str, body: str):
     except Exception as e:
         logger.error(f"❌ Failed to send email to {to_email}: {e}")
         raise
+
+
+
+
+
+def send_subscription_email(to_email: str, status: str):
+    subject_map = {
+        "active": "🎉 Subscription Activated",
+        "failed": "⚠️ Payment Failed",
+        "cancelled": "👋 Subscription Cancelled"
+    }
+    
+    message = MIMEText(f"Your subscription status: {status.title()}")
+    message["Subject"] = subject_map.get(status, "Subscription Update")
+    message["From"] = settings.EMAIL_SENDER
+    message["To"] = to_email
+
+    with SMTP(settings.SMTP_SERVER, settings.SMTP_PORT) as server:
+        server.starttls()
+        server.login(settings.EMAIL_SENDER, settings.EMAIL_PASSWORD)
+        server.send_message(message)

@@ -1,13 +1,16 @@
+# app/models/subscription.py
 from beanie import Document
-from typing import Literal
-from datetime import date
+from pydantic import EmailStr, Field
+from typing import Optional
+from datetime import datetime
 
 class Subscription(Document):
-    user_id: str
-    plan: Literal["1", "3", "6"]  # months
-    start_date: date
-    end_date: date
-    status: Literal["active", "expired", "cancelled"] = "active"
+    user_email: EmailStr
+    stripe_customer_id: str
+    stripe_subscription_id: str
+    status: str  # active, cancelled, payment_failed
+    start_date: datetime
+    end_date: Optional[datetime] = None
 
     class Settings:
         name = "subscriptions"

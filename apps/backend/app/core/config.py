@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     AWS_ACCESS_KEY_ID: str
     AWS_SECRET_ACCESS_KEY: str
     AWS_REGION: str
+    STRIPE_WEBHOOK_SECRET:str
+    STRIPE_PRICE_ID:str
+    FRONTEND_URL:str
 
     class Config:
         env_file = ".env"
