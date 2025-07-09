@@ -11,6 +11,7 @@ from app.schemas.response import SuccessResponse
 from datetime import datetime, time, timezone, timedelta
 from pydantic import BaseModel
 from bson import ObjectId
+from app.utils.require_active_subscription import require_active_subscription
 
 class OptInResponse(BaseModel):
     dinner_id: PydanticObjectId
@@ -39,17 +40,15 @@ async def get_upcoming_dinners(user: User = Depends(get_current_user)):
 @router.post("/opt-in", response_model=SuccessResponse[OptInResponse])
 async def opt_in_to_dinner(
     payload: OptInRequest,
-    user: User = Depends(get_current_user)
+    user: User = Depends(require_active_subscription)  # 👈 This does the blocking
 ):
     dinner = await Dinner.get(payload.dinner_id)
     if not dinner:
         raise HTTPException(status_code=404, detail="Dinner not found")
 
-    # Check if user already opted-in
     if any(u.user_id == user.id for u in dinner.opted_in_users):
         raise HTTPException(status_code=400, detail="Already opted in")
 
-    # Add user with extra metadata
     dinner.opted_in_users.append(DinnerOptInUser(
         user_id=user.id,
         budget_category=payload.budget_category,
@@ -57,6 +56,7 @@ async def opt_in_to_dinner(
     ))
 
     await dinner.save()
+
     return SuccessResponse(
         message="Opted-in successfully",
         data=OptInResponse(dinner_id=payload.dinner_id)
