@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
-from app.models.user import User
 from app.schemas.journey import SaveJourneyRequest, SubmitJourneyResponse
 from app.services.matchmaking.v1 import compute_personality_scores
 from app.schemas.response import SuccessResponse
 from app.dependencies.auth import get_current_user  # middleware-based email extraction
-
+from app.models.user import User, PersonalityAnswer
 
 router = APIRouter(prefix="/journey", tags=["Journey"])
 @router.post(
@@ -79,7 +78,6 @@ async def save_journey(
 
             # Ensure valid list
             if not user.personality_answers or len(user.personality_answers) < 15:
-                from app.models.user import PersonalityAnswer  # make sure it's imported
                 user.personality_answers = [
                     PersonalityAnswer(trait=trait_map[i], question="", answer="") for i in range(15)
                 ]

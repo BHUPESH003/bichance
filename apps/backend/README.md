@@ -20,3 +20,8 @@ publishable-key="pk_live_51OydDmSGp7YEjcqZf4dR33PxCYhbSrXIaPUSsC4NQRVzwRJf6hFz6w
 </stripe-pricing-table>
 
 login to manage billing: https://billing.stripe.com/p/login/5kQdRb5f5bkJdCW1RX6sw00
+
+"email": "bhupesh2534@gmail.com",
+"access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiaHVwZXNoMjUzNEBnbWFpbC5jb20iLCJ0eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUyMTc0MTIyfQ.KkyBO-PIihg7o7ZnRbJvow9RQn327yOK_nyg8ggPBys",
+"refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiaHVwZXNoMjUzNEBnbWFpbC5jb20iLCJ0eXBlIjoicmVmcmVzaCIsImp0aSI6ImE0M2UxZjdkLTI4ZDMtNDdjZi05NGQ2LWIwM2M2OGVlZGU2YiIsImV4cCI6MTc1MjczNTcyMn0.Bpq_CGccREnPCQFmN3B7P3KO0RIb7hkA-qLCUX0lmwM",
+"token_type": "bearer"

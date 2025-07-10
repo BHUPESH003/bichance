@@ -9,7 +9,7 @@ def send_otp_email(to_email: str, otp: str):
     try:
         # Create message container
         message = MIMEMultipart()
-        message["Subject"] = "Your DinnerConnect OTP Code"
+        message["Subject"] = "Your Bichance OTP Code"
         message["From"] = settings.EMAIL_SENDER
         message["To"] = to_email
 
@@ -17,14 +17,14 @@ def send_otp_email(to_email: str, otp: str):
         body = f"""
         Hello,
 
-        Your OTP for DinnerConnect is: {otp}
+        Your OTP for Bichance is: {otp}
 
         This OTP is valid for 5 minutes.
 
         If you did not request this, please ignore this email.
 
         Regards,
-        DinnerConnect Team
+        Bichance Team
         """
         message.attach(MIMEText(body, "plain"))
 
@@ -58,7 +58,7 @@ def send_venue_update_email(to_email: str, name: str, venue_name: str, venue_add
         We hope you have a fantastic evening!
 
         Cheers,  
-        Team DinnerConnect
+        Team Bichance
         """
         message.attach(MIMEText(body, "plain"))
 
