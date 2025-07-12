@@ -1,8 +1,9 @@
 from fastapi import APIRouter, HTTPException, Body
 import httpx
-from functools import lru_cache
 from app.schemas.response import SuccessResponse
 from pydantic import BaseModel
+from async_lru import alru_cache
+
 
 class CountryRequest(BaseModel):
     country: str
@@ -10,7 +11,7 @@ class CountryRequest(BaseModel):
 router = APIRouter()
 BASE_URL = "https://countriesnow.space/api/v0.1/countries"
 
-@lru_cache(maxsize=1)
+@alru_cache(maxsize=1)
 async def fetch_all_countries():
     async with httpx.AsyncClient() as client:
         resp = await client.get(f"{BASE_URL}")
@@ -18,8 +19,11 @@ async def fetch_all_countries():
 
 @router.get("/geo/countries")
 async def list_countries():
-    return SuccessResponse (message="Countries fetched successfully", data={"countries": [c["country"] for c in await fetch_all_countries()]})
-
+    countries = await fetch_all_countries()
+    return SuccessResponse(
+        message="Countries fetched successfully",
+        data={"countries": [c["country"] for c in countries]}
+    )
 @router.post("/geo/country")
 async def list_cities(payload: CountryRequest = Body(...)):
     formatted_country = payload.country.strip().title()
