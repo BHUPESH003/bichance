@@ -4,7 +4,7 @@ const initialState = {
   email: null || localStorage.getItem("email"),
   access_token: null || localStorage.getItem("access_token"),
   refresh_token: null || localStorage.getItem("refresh_token"),
-  isAuthenticated: !!localStorage.getItem("access_token"),
+  isAuthenticated: false || localStorage.getItem("access_token"),
 };
 
 const authSlice = createSlice({
@@ -40,7 +40,7 @@ export const { login, logout, updateUser, setToken } = authSlice.actions;
 
 // Thunk for fetching current user
 export const fetchCurrentUser = () => async (dispatch, getState) => {
-  const { token } = getState().auth;
+  const { access_token } = getState().auth;
   if (!token) return;
 
   try {
@@ -50,13 +50,14 @@ export const fetchCurrentUser = () => async (dispatch, getState) => {
         method: "GET",
         headers: {
           accept: "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${access_token}`,
         },
       }
     );
 
     if (response.ok) {
       const userData = await response.json();
+      console.log("Fetched user data:", userData);
       dispatch(updateUser(userData));
     } else {
       // Token might be invalid, logout
