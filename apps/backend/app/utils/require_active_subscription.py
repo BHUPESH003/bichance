@@ -11,7 +11,16 @@ async def require_active_subscription(user: User = Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="No active subscription found.")
 
     now = datetime.now(timezone.utc)
-    if subscription.status != "active" or (subscription.end_date and subscription.end_date < now):
+
+    # Normalize subscription.end_date to timezone-aware if it's not already
+    if subscription.end_date and subscription.end_date.tzinfo is None:
+        subscription_end_date = subscription.end_date.replace(tzinfo=timezone.utc)
+    else:
+        subscription_end_date = subscription.end_date
+
+    if subscription.status != "active" or (
+        subscription_end_date and subscription_end_date < now
+    ):
         raise HTTPException(status_code=403, detail="Subscription expired.")
 
-    return user  # Pass user forward if needed
+    return user

@@ -92,3 +92,14 @@ async def get_user_bookings(user: User = Depends(get_current_user)) -> SuccessRe
         })
 
     return SuccessResponse(message="Bookings Fetched successfully", data=enriched_dinners)
+
+@router.get("/dinners/opted-in", response_model=SuccessResponse[List[Dinner]])
+async def get_opted_in_dinners(user: User = Depends(get_current_user)):
+    dinners = await Dinner.find(
+        {"opted_in_users.user_id": user.id}
+    ).to_list()
+
+    return SuccessResponse(
+        message="Fetched opted-in dinners successfully",
+        data=dinners
+    )
