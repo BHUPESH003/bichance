@@ -8,7 +8,7 @@ export const PrivateRoute = ({ children }) => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
 
   if (loading) return <LoadingScreen />;
-  if (!isAuthenticated) return <Navigate to="/auth" replace />;
+  if (!isAuthenticated) return <Navigate to="/signin" replace />;
 
   return children;
 };

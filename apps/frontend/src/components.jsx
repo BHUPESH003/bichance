@@ -482,8 +482,6 @@ export function ExclusiveOnboarding({ onComplete }) {
         // Success - navigate to dashboard
         toast.success('Account created successfully! Welcome to Bichance!');
         onComplete(formData);
-        // Navigate to dashboard after successful registration
-        window.location.href = '/dashboard';
       } else {
         // Handle signup error
         toast.error(result.error || 'Registration failed. Please try again.');

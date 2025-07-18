@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useDispatch } from 'react-redux';
+import { login as reduxLogin } from '../store/authSlice';
 
 const API_BASE_URL = (import.meta.env.VITE_BACKEND_URL || 'https://bichance-production-a30f.up.railway.app') + '/api/v1';
 
@@ -25,6 +27,7 @@ export function SimpleAuth({ onAuthSuccess }) {
   const [loading, setLoading] = useState(false);
 
   const { setUser } = useAuth();
+  const dispatch = useDispatch();
 
   const cities = [
     'New York', 'London', 'Singapore', 'Mumbai', 'Delhi', 'Bangalore',
@@ -54,7 +57,12 @@ export function SimpleAuth({ onAuthSuccess }) {
         localStorage.setItem('auth_token', data.access_token);
         localStorage.setItem('user_data', JSON.stringify(data.user));
         toast.success(isLogin ? 'Login successful!' : 'Registration successful!');
-        onAuthSuccess(data.user);
+        if (!isLogin) {
+          dispatch(reduxLogin({ user: data.user, token: data.access_token, access_token: data.access_token, refresh_token: data.refresh_token, email: data.user.email }));
+          navigate('/onboarding');
+        } else {
+          onAuthSuccess(data.user);
+        }
       } else {
         const error = await response.json();
         toast.error(error.detail || 'Authentication failed');
@@ -110,7 +118,7 @@ export function SimpleAuth({ onAuthSuccess }) {
         localStorage.setItem('auth_token', data.data.access_token);
         localStorage.setItem('token', data.data.access_token); // Save as 'token' for dashboard
         setUser({ email, ...data.data }); // <-- set user in context
-        // if (onAuthSuccess) onAuthSuccess({ email, ...data.data });
+        dispatch(reduxLogin({ user: { email, ...data.data }, token: data.data.access_token, access_token: data.data.access_token, refresh_token: data.data.refresh_token, email }));
         navigate('/onboarding');
       } else {
         const error = await res.json();

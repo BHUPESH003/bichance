@@ -100,7 +100,8 @@ export const AuthProvider = ({ children }) => {
         user_id: mockUser.id,
         email: mockUser.email,
         first_name: mockUser.user_metadata.first_name,
-        last_name: mockUser.user_metadata.last_name
+        last_name: mockUser.user_metadata.last_name,
+        onboarding_complete: false // ensure onboarding is not complete by default
       })
       
       toast.success('Account created successfully! Welcome to Bichance!')
@@ -138,7 +139,8 @@ export const AuthProvider = ({ children }) => {
         user_id: mockUser.id,
         email: mockUser.email,
         first_name: mockUser.user_metadata.first_name,
-        last_name: mockUser.user_metadata.last_name
+        last_name: mockUser.user_metadata.last_name,
+        onboarding_complete: false // ensure onboarding is not complete by default
       })
 
       toast.success('Welcome back!')

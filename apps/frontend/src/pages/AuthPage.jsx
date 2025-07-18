@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { login as reduxLogin } from '../store/authSlice';
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "";
 
@@ -15,6 +16,7 @@ const AuthPage = () => {
   const [countdown, setCountdown] = useState(0);
   const navigate = useNavigate();
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+  const dispatch = useDispatch();
 
   // Countdown timer effect
   useEffect(() => {
@@ -98,6 +100,7 @@ const AuthPage = () => {
         if (data.data && data.data.access_token) {
           localStorage.setItem("access_token", data.data.access_token);
           localStorage.setItem("refresh_token", data.data.refresh_token);
+          dispatch(reduxLogin({ user: data.data.user || {}, token: data.data.access_token, access_token: data.data.access_token, refresh_token: data.data.refresh_token, email: email }));
         }
         console.log("Redirecting to /onboarding");
         navigate("/onboarding");

@@ -90,7 +90,7 @@ const AboutPage = () => {
                 Blog
               </motion.button>
               <motion.button 
-                onClick={() => navigate('/auth')}
+                onClick={() => navigate('/auth?mode=signup')}
                 className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-2 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -121,7 +121,7 @@ const AboutPage = () => {
               Free-fall into social possibilities without digital screens. Open up to the people around you without expectations. Start a conversation, spark a connection. Go out for a dinner with strangers.<br /><br />
               <span className="text-xl md:text-2xl font-semibold text-red-500">Take a chance, have a seat. And just say,</span>
             </p>
-            <button className="bg-red-200 hover:bg-red-400 text-red-900 font-bold px-8 py-3 rounded-full shadow transition-all text-lg mt-4" onClick={() => navigate('/auth')}>
+            <button className="bg-red-200 hover:bg-red-400 text-red-900 font-bold px-8 py-3 rounded-full shadow transition-all text-lg mt-4" onClick={() => navigate('/auth?mode=signup')}>
               &quot;HELLO STRANGER&quot;
             </button>
           </motion.div>
@@ -191,7 +191,7 @@ const AboutPage = () => {
               to grow through meaningful experiences with others.
             </p>
             <motion.button 
-              onClick={() => navigate('/auth')}
+              onClick={() => navigate('/auth?mode=signup')}
               className="bg-white text-red-600 px-8 py-3 rounded-full text-lg font-semibold shadow-2xl hover:shadow-3xl transition-all duration-300 hover:bg-gray-50"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

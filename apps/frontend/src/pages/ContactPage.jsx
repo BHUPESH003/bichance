@@ -115,7 +115,7 @@ const ContactPage = () => {
                 About
               </motion.button>
               <motion.button 
-                onClick={() => navigate('/auth')}
+                onClick={() => navigate('/auth?mode=signup')}
                 className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-2 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -429,7 +429,7 @@ const ContactPage = () => {
               Don't wait for the perfect moment. The perfect moment is now. Join our community and start your journey today.
             </p>
             <motion.button 
-              onClick={() => navigate('/auth')}
+              onClick={() => navigate('/auth?mode=signup')}
               className="bg-white text-red-600 px-12 py-4 rounded-full text-xl font-semibold shadow-2xl hover:shadow-3xl transition-all duration-300 hover:bg-gray-50"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

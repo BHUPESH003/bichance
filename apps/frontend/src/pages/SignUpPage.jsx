@@ -13,7 +13,7 @@ const SignUpPage = () => {
           </h2>
         </div>
         <button
-          onClick={() => navigate('/auth')}
+          onClick={() => navigate('/auth?mode=signup')}
           className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all"
         >
           Start Registration

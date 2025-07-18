@@ -68,7 +68,7 @@ const LandingPage = () => {
   // Removed auto-sliding since there's only one slide
 
   const handleJoinNow = () => {
-    navigate('/auth');
+    navigate('/auth?mode=signup');
   };
 
   const handleSignIn = () => {

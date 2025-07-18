@@ -12,7 +12,12 @@ const authSlice = createSlice({
   initialState: initialState,
   reducers: {
     login: (state, action) => {
-      state.user = action.payload.user;
+      // Ensure onboarding_complete is false by default if not present
+      const user = {
+        ...action.payload.user,
+        onboarding_complete: action.payload.user?.onboarding_complete ?? false
+      };
+      state.user = user;
       state.token = action.payload.token;
       state.isAuthenticated = true;
       localStorage.setItem("access_token", action.payload.access_token);
@@ -26,8 +31,13 @@ const authSlice = createSlice({
       localStorage.clear();
     },
     updateUser: (state, action) => {
-      state.user = action.payload;
-      localStorage.setItem("user", JSON.stringify(action.payload));
+      // Ensure onboarding_complete is false by default if not present
+      const user = {
+        ...action.payload,
+        onboarding_complete: action.payload?.onboarding_complete ?? false
+      };
+      state.user = user;
+      localStorage.setItem("user", JSON.stringify(user));
     },
     setToken: (state, action) => {
       state.token = action.payload;

@@ -65,11 +65,13 @@ const BlogPage = () => {
                 whileHover={{ scale: 1.05 }}
               >Blog</motion.button>
               <motion.button 
-                onClick={() => navigate('/auth')}
+                onClick={() => navigate('/auth?mode=signup')}
                 className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-2 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-              >Join Now</motion.button>
+              >
+                Join Now
+              </motion.button>
             </div>
           </div>
         </div>

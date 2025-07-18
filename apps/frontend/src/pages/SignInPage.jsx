@@ -92,14 +92,14 @@ const SignInPage = () => {
 
           <div className="flex items-center justify-between">
             <div className="text-sm">
-              <a href="/forgot-password" className="font-medium text-red-600 hover:text-red-800 underline transition-colors">
+              <button type="button" onClick={() => navigate('/forgot-password')} className="font-medium text-red-600 hover:text-red-800 underline transition-colors bg-transparent border-none p-0 cursor-pointer">
                 Forgot your password?
-              </a>
+              </button>
             </div>
             <div className="text-sm">
-              <a href="/signup" className="font-medium text-red-600 hover:text-red-800 underline transition-colors">
+              <button type="button" onClick={() => navigate('/auth?mode=signup')} className="font-medium text-red-600 hover:text-red-800 underline transition-colors bg-transparent border-none p-0 cursor-pointer">
                 Don't have an account?
-              </a>
+              </button>
             </div>
           </div>
         </form>
