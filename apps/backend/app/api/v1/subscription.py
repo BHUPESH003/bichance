@@ -5,7 +5,6 @@ from stripe import stripe, error as stripe_error
 from app.models.subscription import Subscription
 from app.models.user import User
 from app.dependencies.auth import get_current_user
-from app.services.email import send_subscription_email
 from app.core.config import settings
 from datetime import datetime, timezone
 from pydantic import BaseModel
@@ -55,6 +54,11 @@ async def cancel_subscription(user: User = Depends(get_current_user)):
     subscription.status = "cancelled"
     subscription.end_date = datetime.now(timezone.utc)
     await subscription.save()
+
+    user.subscription_status = "cancelled"
+    user.subscription_end_date = subscription.end_date
+    await user.save()
+    
     return {"message": "Subscription cancelled"}
 
 
@@ -79,9 +83,11 @@ async def stripe_webhook(request: Request):
         customer_id = session["customer"]
 
         user = await User.get(PydanticObjectId(user_id))
-        user.stripe_customer_id = customer_id
-        await user.save()
-
+        if user:
+            user.stripe_customer_id = customer_id
+            user.subscription_status = "active"
+            user.subscription_end_date = datetime.fromtimestamp(subscription['current_period_end'], tz=timezone.utc)
+            await user.save()
 
         new_sub = Subscription(
             user_email=customer_email,
@@ -101,16 +107,23 @@ async def stripe_webhook(request: Request):
 
 
     elif event['type'] == 'invoice.payment_failed':
-        sub_id = event['data']['object']['subscription']
-        subscription = await Subscription.find_one(Subscription.stripe_subscription_id == sub_id)
-        if subscription:
-            subscription.status = "payment_failed"
-            await subscription.save()
-            queue_notification({
-            "type": "SUBSCRIPTION_EMAIL",
-            "to_email": customer_email,
-            "status": "failed"
-        })
+            sub_id = event['data']['object']['subscription']
+            subscription = await Subscription.find_one(Subscription.stripe_subscription_id == sub_id)
+            if subscription:
+                subscription.status = "payment_failed"
+                await subscription.save()
+
+                user = await User.find_one(User.email == subscription.user_email)
+                if user:
+                    user.subscription_status = "payment_failed"
+                    await user.save()
+
+                queue_notification({
+                    "type": "SUBSCRIPTION_EMAIL",
+                    "to_email": subscription.user_email,
+                    "status": "failed"
+                })
+
 
     elif event['type'] == 'customer.subscription.deleted':
         sub_id = event['data']['object']['id']
@@ -119,11 +132,18 @@ async def stripe_webhook(request: Request):
             subscription.status = "cancelled"
             subscription.end_date = datetime.now(timezone.utc)
             await subscription.save()
+
+            user = await User.find_one(User.email == subscription.user_email)
+            if user:
+                user.subscription_status = "cancelled"
+                user.subscription_end_date = subscription.end_date
+                await user.save()
+
             queue_notification({
-            "type": "SUBSCRIPTION_EMAIL",
-            "to_email": customer_email,
-            "status": "cancelled"
-        })
+                "type": "SUBSCRIPTION_EMAIL",
+                "to_email": subscription.user_email,
+                "status": "cancelled"
+            })
 
     return {"status": "success"}
 

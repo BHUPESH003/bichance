@@ -12,6 +12,8 @@ from datetime import datetime, time, timezone, timedelta
 from pydantic import BaseModel
 from bson import ObjectId
 from app.utils.require_active_subscription import require_active_subscription
+from app.core.notifications.producer import queue_notification
+from zoneinfo import ZoneInfo  # Python 3.9+
 
 class OptInResponse(BaseModel):
     dinner_id: PydanticObjectId
@@ -19,7 +21,19 @@ class OptInRequest(BaseModel):
     dinner_id: PydanticObjectId
     budget_category: Optional[str] = None
     dietary_category: Optional[str] = None
-    
+class DinnerGroupInfo(BaseModel):
+    group_id: str
+    venue_id: Optional[str]
+    participant_ids: List[PydanticObjectId]
+    match_score: Optional[float]
+
+class UserDinnerStatus(BaseModel):
+    dinner_id: PydanticObjectId
+    date: datetime
+    city: str
+    country: str
+    matched: bool
+    group: Optional[DinnerGroupInfo] = None
 router = APIRouter(prefix="/dinner", tags=["Dinner - User"])
 
 @router.get("/upcoming", response_model=SuccessResponse[List[DinnerPublicResponse]])
@@ -56,6 +70,18 @@ async def opt_in_to_dinner(
     ))
 
     await dinner.save()
+    utc_dt = dinner.date
+
+    ist_dt = utc_dt.astimezone(ZoneInfo("Asia/Kolkata"))
+
+    queue_notification({
+        "type": "DINNER_OPT_IN_EMAIL",
+        "to_email": user.email,
+        "name": user.name or "Guest",
+        "date": ist_dt.strftime("%Y-%m-%d"),
+        "time": ist_dt.strftime("%I:%M %p"),
+        "city": dinner.city,
+    })
 
     return SuccessResponse(
         message="Opted-in successfully",
@@ -93,13 +119,41 @@ async def get_user_bookings(user: User = Depends(get_current_user)) -> SuccessRe
 
     return SuccessResponse(message="Bookings Fetched successfully", data=enriched_dinners)
 
-@router.get("/dinners/opted-in", response_model=SuccessResponse[List[Dinner]])
-async def get_opted_in_dinners(user: User = Depends(get_current_user)):
+@router.get("/dinners/user-view", response_model=SuccessResponse[List[UserDinnerStatus]])
+async def get_user_dinner_status(user: User = Depends(get_current_user)):
+    # Find all dinners the user opted into
     dinners = await Dinner.find(
         {"opted_in_users.user_id": user.id}
     ).to_list()
+    print("dinners",dinners)
+    response_data = []
+
+    for dinner in dinners:
+        entry = {
+            "dinner_id": dinner.id,
+            "date": dinner.date,
+            "city": dinner.city,
+            "country": dinner.country,
+            "matched": dinner.matched,
+            "group": None
+        }
+
+        if dinner.matched:
+            group = await DinnerGroup.find_one({
+                "dinner_id": dinner.id,
+                "participant_ids": user.id
+            })
+            if group:
+                entry["group"] = {
+                    "group_id": str(group.id),
+                    "venue_id": str(group.venue_id) if group.venue_id else None,
+                    "participant_ids": group.participant_ids,
+                    "match_score": group.match_score,
+                }
+
+        response_data.append(entry)
 
     return SuccessResponse(
-        message="Fetched opted-in dinners successfully",
-        data=dinners
+        message="Fetched user dinner status",
+        data=response_data
     )

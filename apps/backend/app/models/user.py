@@ -1,7 +1,7 @@
 from beanie import Document
 from pydantic import EmailStr, Field, BaseModel
 from typing import Optional, Dict, List
-from datetime import date
+from datetime import date, datetime
 
 class PersonalityAnswer(BaseModel):
     trait: str  # One of "O", "C", "E", "A", "N"
@@ -28,6 +28,8 @@ class User(Document):
 
     identity_verified: bool = False
     subscription_status: str = "none"
+    subscription_end_date: Optional[datetime] = None  # ⬅ 👈 Added
+
 
     image_url: Optional[str] = None
     current_country: Optional[str] = ""

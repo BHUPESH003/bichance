@@ -6,7 +6,7 @@ from app.dependencies.auth import get_current_user
 
 async def require_active_subscription(user: User = Depends(get_current_user)):
     subscription = await Subscription.find_one(Subscription.user_email == user.email)
-
+    print("subscription",subscription)
     if not subscription:
         raise HTTPException(status_code=403, detail="No active subscription found.")
 
