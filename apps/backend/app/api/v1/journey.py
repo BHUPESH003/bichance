@@ -41,6 +41,8 @@ Used to save either a personality or identity answer.
 > 💡 For these questions, answers should be `"0"` or `"1"` (interpreted as boolean: disagree/agree).
 
 #### 🧬 Identity Information:
+- `name`: Full name of the user
+- `mobile`: Phone number of the user
 - `gender`: User's gender
 - `relationship_status`: User’s current relationship status
 - `children`: Whether the user has children (`true`/`false`)
@@ -89,7 +91,7 @@ async def save_journey(
             )
         else:
             raise HTTPException(status_code=400, detail="Invalid question index")
-    elif key in {"gender", "relationship_status", "profession", "country"}:
+    elif key in {"gender", "relationship_status", "profession", "country", "name", "mobile"}:
         setattr(user, key, val)
     elif key == "children":
         user.children = bool(val)
