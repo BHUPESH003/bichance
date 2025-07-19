@@ -24,3 +24,5 @@ class QuestionKey(str, Enum):
     profession = "profession"
     country = "country"
     dob = "dob"
+    name = "name"
+    mobile = "mobile"
