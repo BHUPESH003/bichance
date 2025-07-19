@@ -28,7 +28,7 @@ const OnboardingPage = () => {
           userData &&
           Object.keys(userData.data.personality_scores).length > 0
         ) {
-          // navigate("/dashboard");
+          navigate("/dashboard");
         }
         // Do something with userData, e.g., dispatch to Redux
       }
