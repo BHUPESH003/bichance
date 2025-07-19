@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
-import { login as reduxLogin } from '../store/authSlice';
+import { login as reduxLogin } from "../store/authSlice";
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "";
 
@@ -100,7 +100,15 @@ const AuthPage = () => {
         if (data.data && data.data.access_token) {
           localStorage.setItem("access_token", data.data.access_token);
           localStorage.setItem("refresh_token", data.data.refresh_token);
-          dispatch(reduxLogin({ user: data.data.user || {}, token: data.data.access_token, access_token: data.data.access_token, refresh_token: data.data.refresh_token, email: email }));
+          dispatch(
+            reduxLogin({
+              user: data.data.user || {},
+              token: data.data.access_token,
+              access_token: data.data.access_token,
+              refresh_token: data.data.refresh_token,
+              email: email,
+            })
+          );
         }
         console.log("Redirecting to /onboarding");
         navigate("/onboarding");
@@ -112,11 +120,6 @@ const AuthPage = () => {
     }
     setLoading(false);
   };
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/dashboard");
-    }
-  }, [isAuthenticated, navigate]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-red-50 to-white px-2 sm:px-4 w-full">

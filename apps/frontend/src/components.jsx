@@ -1,215 +1,222 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import toast from 'react-hot-toast';
-import { useAuth } from './hooks/useAuth';
-import { useWaitlist, useDinners, useBookings } from './hooks/useSupabase';
-import { db } from './lib/supabase';
-import { analytics, personalityTracking, diningManagement } from './lib/supabaseEnhanced';
-import AdminPanel from './components/AdminPanel';
-import { useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
-import { login } from './store/authSlice';
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import toast from "react-hot-toast";
+import { useAuth } from "./hooks/useAuth";
+import { useWaitlist, useDinners, useBookings } from "./hooks/useSupabase";
+import { db } from "./lib/supabase";
+import {
+  analytics,
+  personalityTracking,
+  diningManagement,
+} from "./lib/supabaseEnhanced";
+import AdminPanel from "./components/AdminPanel";
+import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { login } from "./store/authSlice";
 
 // API Configuration
-const API_BASE_URL = (import.meta.env.VITE_BACKEND_URL || 'https://bichance-production-a30f.up.railway.app') + '/api';
+const API_BASE_URL =
+  (import.meta.env.VITE_BACKEND_URL ||
+    "https://bichance-production-a30f.up.railway.app") + "/api";
 
 // Supported countries with their top cities and localities
 const COUNTRY_CITY_DATA = {
-  'Singapore': {
+  Singapore: {
     cities: [
       {
-        name: 'Singapore City',
-        localities: ['Marina Bay', 'Orchard Road', 'Clarke Quay']
-      }
-    ]
+        name: "Singapore City",
+        localities: ["Marina Bay", "Orchard Road", "Clarke Quay"],
+      },
+    ],
   },
-  'United States': {
+  "United States": {
     cities: [
       {
-        name: 'New York',
-        localities: ['Manhattan', 'Brooklyn', 'Queens']
+        name: "New York",
+        localities: ["Manhattan", "Brooklyn", "Queens"],
       },
       {
-        name: 'San Francisco',
-        localities: ['SOMA', 'Mission District', 'Nob Hill']
+        name: "San Francisco",
+        localities: ["SOMA", "Mission District", "Nob Hill"],
       },
       {
-        name: 'Los Angeles',
-        localities: ['Beverly Hills', 'Santa Monica', 'Hollywood']
-      }
-    ]
+        name: "Los Angeles",
+        localities: ["Beverly Hills", "Santa Monica", "Hollywood"],
+      },
+    ],
   },
-  'United Kingdom': {
+  "United Kingdom": {
     cities: [
       {
-        name: 'London',
-        localities: ['Central London', 'Canary Wharf', 'Shoreditch']
+        name: "London",
+        localities: ["Central London", "Canary Wharf", "Shoreditch"],
       },
       {
-        name: 'Manchester',
-        localities: ['City Centre', 'Northern Quarter', 'Ancoats']
+        name: "Manchester",
+        localities: ["City Centre", "Northern Quarter", "Ancoats"],
       },
       {
-        name: 'Edinburgh',
-        localities: ['Old Town', 'New Town', 'Leith']
-      }
-    ]
+        name: "Edinburgh",
+        localities: ["Old Town", "New Town", "Leith"],
+      },
+    ],
   },
-  'Canada': {
+  Canada: {
     cities: [
       {
-        name: 'Toronto',
-        localities: ['Downtown', 'King Street West', 'Entertainment District']
+        name: "Toronto",
+        localities: ["Downtown", "King Street West", "Entertainment District"],
       },
       {
-        name: 'Vancouver',
-        localities: ['Downtown', 'Yaletown', 'Gastown']
+        name: "Vancouver",
+        localities: ["Downtown", "Yaletown", "Gastown"],
       },
       {
-        name: 'Montreal',
-        localities: ['Old Montreal', 'Plateau', 'Downtown']
-      }
-    ]
+        name: "Montreal",
+        localities: ["Old Montreal", "Plateau", "Downtown"],
+      },
+    ],
   },
-  'Australia': {
+  Australia: {
     cities: [
       {
-        name: 'Sydney',
-        localities: ['CBD', 'Darling Harbour', 'The Rocks']
+        name: "Sydney",
+        localities: ["CBD", "Darling Harbour", "The Rocks"],
       },
       {
-        name: 'Melbourne',
-        localities: ['CBD', 'South Yarra', 'Fitzroy']
+        name: "Melbourne",
+        localities: ["CBD", "South Yarra", "Fitzroy"],
       },
       {
-        name: 'Brisbane',
-        localities: ['CBD', 'South Bank', 'Fortitude Valley']
-      }
-    ]
+        name: "Brisbane",
+        localities: ["CBD", "South Bank", "Fortitude Valley"],
+      },
+    ],
   },
-  'Germany': {
+  Germany: {
     cities: [
       {
-        name: 'Berlin',
-        localities: ['Mitte', 'Kreuzberg', 'Prenzlauer Berg']
+        name: "Berlin",
+        localities: ["Mitte", "Kreuzberg", "Prenzlauer Berg"],
       },
       {
-        name: 'Munich',
-        localities: ['Altstadt', 'Maxvorstadt', 'Schwabing']
+        name: "Munich",
+        localities: ["Altstadt", "Maxvorstadt", "Schwabing"],
       },
       {
-        name: 'Hamburg',
-        localities: ['HafenCity', 'St. Pauli', 'Altona']
-      }
-    ]
+        name: "Hamburg",
+        localities: ["HafenCity", "St. Pauli", "Altona"],
+      },
+    ],
   },
-  'France': {
+  France: {
     cities: [
       {
-        name: 'Paris',
-        localities: ['1st Arrondissement', 'Marais', 'Saint-Germain']
+        name: "Paris",
+        localities: ["1st Arrondissement", "Marais", "Saint-Germain"],
       },
       {
-        name: 'Lyon',
-        localities: ['Presqu\'île', 'Vieux Lyon', 'Part-Dieu']
+        name: "Lyon",
+        localities: ["Presqu'île", "Vieux Lyon", "Part-Dieu"],
       },
       {
-        name: 'Nice',
-        localities: ['Old Town', 'Promenade des Anglais', 'Liberation']
-      }
-    ]
+        name: "Nice",
+        localities: ["Old Town", "Promenade des Anglais", "Liberation"],
+      },
+    ],
   },
-  'India': {
+  India: {
     cities: [
       {
-        name: 'Mumbai',
-        localities: ['Bandra', 'Lower Parel', 'Andheri']
+        name: "Mumbai",
+        localities: ["Bandra", "Lower Parel", "Andheri"],
       },
       {
-        name: 'Delhi',
-        localities: ['Connaught Place', 'Khan Market', 'Hauz Khas']
+        name: "Delhi",
+        localities: ["Connaught Place", "Khan Market", "Hauz Khas"],
       },
       {
-        name: 'Bangalore',
-        localities: ['Koramangala', 'Indiranagar', 'Brigade Road']
-      }
-    ]
+        name: "Bangalore",
+        localities: ["Koramangala", "Indiranagar", "Brigade Road"],
+      },
+    ],
   },
-  'Japan': {
+  Japan: {
     cities: [
       {
-        name: 'Tokyo',
-        localities: ['Shibuya', 'Shinjuku', 'Ginza']
+        name: "Tokyo",
+        localities: ["Shibuya", "Shinjuku", "Ginza"],
       },
       {
-        name: 'Osaka',
-        localities: ['Namba', 'Umeda', 'Shinsekai']
+        name: "Osaka",
+        localities: ["Namba", "Umeda", "Shinsekai"],
       },
       {
-        name: 'Kyoto',
-        localities: ['Gion', 'Arashiyama', 'Downtown']
-      }
-    ]
+        name: "Kyoto",
+        localities: ["Gion", "Arashiyama", "Downtown"],
+      },
+    ],
   },
-  'UAE': {
+  UAE: {
     cities: [
       {
-        name: 'Dubai',
-        localities: ['Downtown Dubai', 'Dubai Marina', 'Business Bay']
+        name: "Dubai",
+        localities: ["Downtown Dubai", "Dubai Marina", "Business Bay"],
       },
       {
-        name: 'Abu Dhabi',
-        localities: ['Corniche', 'Al Reem Island', 'Yas Island']
+        name: "Abu Dhabi",
+        localities: ["Corniche", "Al Reem Island", "Yas Island"],
       },
       {
-        name: 'Sharjah',
-        localities: ['Al Majaz', 'Al Qasba', 'City Centre']
-      }
-    ]
-  }
+        name: "Sharjah",
+        localities: ["Al Majaz", "Al Qasba", "City Centre"],
+      },
+    ],
+  },
 };
 
 // Extract all supported cities from COUNTRY_CITY_DATA
-const SUPPORTED_CITIES = Object.values(COUNTRY_CITY_DATA)
-  .flatMap(country => country.cities.map(city => city.name));
+const SUPPORTED_CITIES = Object.values(COUNTRY_CITY_DATA).flatMap((country) =>
+  country.cities.map((city) => city.name)
+);
 
 // Country codes mapping (kept for phone verification)
 const COUNTRY_CODES = {
-  'Singapore': '+65',
-  'United States': '+1',
-  'United Kingdom': '+44',
-  'Canada': '+1',
-  'Australia': '+61',
-  'Germany': '+49',
-  'France': '+33',
-  'India': '+91',
-  'Japan': '+81',
-  'Brazil': '+55',
-  'Mexico': '+52',
-  'Netherlands': '+31',
-  'Switzerland': '+41',
-  'Sweden': '+46',
-  'Norway': '+47',
-  'Denmark': '+45',
-  'Finland': '+358',
-  'Belgium': '+32',
-  'Austria': '+43',
-  'Italy': '+39',
-  'Spain': '+34',
-  'Portugal': '+351',
-  'UAE': '+971',
-  'Hong Kong': '+852',
-  'South Korea': '+82',
-  'Thailand': '+66',
-  'Malaysia': '+60',
-  'Philippines': '+63',
-  'Indonesia': '+62',
-  'Vietnam': '+84',
-  'Taiwan': '+886',
-  'Israel': '+972',
-  'Turkey': '+90',
-  'South Africa': '+27',
-  'Other': '+1'
+  Singapore: "+65",
+  "United States": "+1",
+  "United Kingdom": "+44",
+  Canada: "+1",
+  Australia: "+61",
+  Germany: "+49",
+  France: "+33",
+  India: "+91",
+  Japan: "+81",
+  Brazil: "+55",
+  Mexico: "+52",
+  Netherlands: "+31",
+  Switzerland: "+41",
+  Sweden: "+46",
+  Norway: "+47",
+  Denmark: "+45",
+  Finland: "+358",
+  Belgium: "+32",
+  Austria: "+43",
+  Italy: "+39",
+  Spain: "+34",
+  Portugal: "+351",
+  UAE: "+971",
+  "Hong Kong": "+852",
+  "South Korea": "+82",
+  Thailand: "+66",
+  Malaysia: "+60",
+  Philippines: "+63",
+  Indonesia: "+62",
+  Vietnam: "+84",
+  Taiwan: "+886",
+  Israel: "+972",
+  Turkey: "+90",
+  "South Africa": "+27",
+  Other: "+1",
 };
 
 // Complete 15 Questions for Personality Assessment
@@ -217,112 +224,134 @@ const ONBOARDING_QUESTIONS = [
   {
     id: 1,
     question: "I enjoy discussing politics and current news.",
-    inverted: false
+    inverted: false,
   },
   {
     id: 2,
     question: "I prefer small gatherings over large parties.",
-    inverted: true
+    inverted: true,
   },
   {
     id: 3,
     question: "I like to plan ahead and stay organized.",
-    inverted: false
+    inverted: false,
   },
   {
     id: 4,
     question: "I often go with the flow rather than planning.",
-    inverted: true
+    inverted: true,
   },
   {
     id: 5,
     question: "I enjoy debating different ideas.",
-    inverted: false
+    inverted: false,
   },
   {
     id: 6,
     question: "I like trying new restaurants and cuisines.",
-    inverted: false
+    inverted: false,
   },
   {
     id: 7,
     question: "I feel energized when I'm around other people.",
-    inverted: false
+    inverted: false,
   },
   {
     id: 8,
     question: "I enjoy listening more than talking.",
-    inverted: true
+    inverted: true,
   },
   {
     id: 9,
     question: "I enjoy philosophical or deep conversations.",
-    inverted: false
+    inverted: false,
   },
   {
     id: 10,
     question: "I prefer familiar foods over exotic dishes.",
-    inverted: true
+    inverted: true,
   },
   {
     id: 11,
     question: "I enjoy meeting new and different types of people.",
-    inverted: false
+    inverted: false,
   },
   {
     id: 12,
     question: "I like organizing events and gatherings.",
-    inverted: false
+    inverted: false,
   },
   {
     id: 13,
     question: "I prefer quiet environments.",
-    inverted: true
+    inverted: true,
   },
   {
     id: 14,
     question: "I am comfortable sharing personal stories.",
-    inverted: false
+    inverted: false,
   },
   {
     id: 15,
     question: "I like helping others feel included in a group.",
-    inverted: false
-  }
+    inverted: false,
+  },
 ];
 
 // Add at the top, after ONBOARDING_QUESTIONS
 const IDENTITY_QUESTIONS = [
   {
-    id: 'gender',
+    id: "gender",
     question: "What is your gender?",
-    options: ['Male', 'Female', 'Other', 'Prefer not to say']
+    options: ["Male", "Female", "Other", "Prefer not to say"],
   },
   {
-    id: 'relationship_status',
+    id: "relationship_status",
     question: "What is your current relationship status?",
-    options: ['Single', 'In a relationship', 'Married', 'Divorced', 'Widowed', 'Prefer not to say']
+    options: [
+      "Single",
+      "In a relationship",
+      "Married",
+      "Divorced",
+      "Widowed",
+      "Prefer not to say",
+    ],
   },
   {
-    id: 'children',
+    id: "children",
     question: "Do you have children?",
-    options: ['Yes', 'No']
+    options: ["Yes", "No"],
   },
   {
-    id: 'profession',
+    id: "profession",
     question: "What is your professional domain or industry?",
-    options: ['Technology', 'Business', 'Education', 'Healthcare', 'Arts', 'Student', 'Other']
+    options: [
+      "Technology",
+      "Business",
+      "Education",
+      "Healthcare",
+      "Arts",
+      "Student",
+      "Other",
+    ],
   },
   {
-    id: 'country',
+    id: "country",
     question: "What is your country of origin?",
-    options: ['India', 'United States', 'United Kingdom', 'Canada', 'Australia', 'Other'] // You can expand this list or use country API
+    options: [
+      "India",
+      "United States",
+      "United Kingdom",
+      "Canada",
+      "Australia",
+      "Other",
+    ], // You can expand this list or use country API
   },
   {
-    id: 'dob',
+    id: "dob",
     question: "What is your date of birth? (YYYY-MM-DD)",
-    options: null // Will use a date input
-  }
+    options: null, // Will use a date input
+  },
 ];
 
 // Auto-save functionality
@@ -332,12 +361,15 @@ const useAutoSave = (data, endpoint) => {
       if (Object.keys(data).length > 0) {
         try {
           await fetch(`${API_BASE_URL}${endpoint}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...data, timestamp: new Date().toISOString() })
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              ...data,
+              timestamp: new Date().toISOString(),
+            }),
           });
         } catch (error) {
-          console.log('Auto-save failed:', error);
+          console.log("Auto-save failed:", error);
         }
       }
     };
@@ -366,29 +398,33 @@ const useLocationDetection = () => {
               );
               const data = await response.json();
               setLocation({
-                city: data.city || data.locality || 'Unknown',
-                country: data.countryName || 'Unknown',
-                detected: true
+                city: data.city || data.locality || "Unknown",
+                country: data.countryName || "Unknown",
+                detected: true,
               });
             } catch (error) {
-              console.error('Geocoding failed:', error);
-              setLocation({ city: 'Unknown', country: 'Unknown', detected: false });
+              console.error("Geocoding failed:", error);
+              setLocation({
+                city: "Unknown",
+                country: "Unknown",
+                detected: false,
+              });
             }
             setLoading(false);
           },
           (error) => {
-            console.error('Geolocation failed:', error);
-            setLocation({ city: '', country: '', detected: false });
+            console.error("Geolocation failed:", error);
+            setLocation({ city: "", country: "", detected: false });
             setLoading(false);
           }
         );
       } else {
-        setLocation({ city: '', country: '', detected: false });
+        setLocation({ city: "", country: "", detected: false });
         setLoading(false);
       }
     } catch (error) {
-      console.error('Location detection failed:', error);
-      setLocation({ city: '', country: '', detected: false });
+      console.error("Location detection failed:", error);
+      setLocation({ city: "", country: "", detected: false });
       setLoading(false);
     }
   };
@@ -400,40 +436,40 @@ const useLocationDetection = () => {
 export function ExclusiveOnboarding({ onComplete }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    phoneNumber: '',
-    dateOfBirth: '',
-    gender: '',
-    city: '',
-    locality: '',
-    bio: '',
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    phoneNumber: "",
+    dateOfBirth: "",
+    gender: "",
+    city: "",
+    locality: "",
+    bio: "",
     interests: [],
     dietaryRestrictions: [],
-    occupation: '',
-    education: '',
-    emergencyContactName: '',
-    emergencyContactPhone: '',
-    personalityScores: {}
+    occupation: "",
+    education: "",
+    emergencyContactName: "",
+    emergencyContactPhone: "",
+    personalityScores: {},
   });
 
   const [isLoading, setIsLoading] = useState(false);
   const { signUp } = useAuth();
   const { addToWaitlist } = useWaitlist();
 
-  const totalSteps = 11; // Member check, Phone, Country, City, Binary, Personality, Result, Identity, Details, Account, Complete
+  const totalSteps = 8; // Member check, Phone, Country, City, Binary, Personality, Result, Identity, Details, Account, Complete
 
   const updateFormData = (updates) => {
-    setFormData(prev => ({ ...prev, ...updates }));
+    setFormData((prev) => ({ ...prev, ...updates }));
   };
 
   const [compatibilityScore, setCompatibilityScore] = useState(null);
 
   const handleNext = (score) => {
-    if (typeof score === 'number') {
+    if (typeof score === "number") {
       setCompatibilityScore(score);
     }
     if (currentStep < totalSteps) {
@@ -448,12 +484,12 @@ export function ExclusiveOnboarding({ onComplete }) {
     try {
       // Validate required fields
       if (!formData.email || !formData.password) {
-        toast.error('Email and password are required');
+        toast.error("Email and password are required");
         return;
       }
 
       if (formData.password !== formData.confirmPassword) {
-        toast.error('Passwords do not match');
+        toast.error("Passwords do not match");
         return;
       }
 
@@ -473,22 +509,22 @@ export function ExclusiveOnboarding({ onComplete }) {
         education: formData.education,
         emergency_contact_name: formData.emergencyContactName,
         emergency_contact_phone: formData.emergencyContactPhone,
-        personality_scores: formData.personalityScores
+        personality_scores: formData.personalityScores,
       };
 
       const result = await signUp(formData.email, formData.password, userData);
 
       if (result.success && result.data?.user) {
         // Success - navigate to dashboard
-        toast.success('Account created successfully! Welcome to Bichance!');
+        toast.success("Account created successfully! Welcome to Bichance!");
         onComplete(formData);
       } else {
         // Handle signup error
-        toast.error(result.error || 'Registration failed. Please try again.');
+        toast.error(result.error || "Registration failed. Please try again.");
       }
     } catch (error) {
-      console.error('Registration error:', error);
-      toast.error('Registration failed. Please try again.');
+      console.error("Registration error:", error);
+      toast.error("Registration failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -501,30 +537,80 @@ export function ExclusiveOnboarding({ onComplete }) {
   };
 
   const getStepComponent = () => {
-    console.log('Current step:', currentStep);
+    console.log("Current step:", currentStep);
     switch (currentStep) {
       case 1:
-        return <MemberCheckStep formData={formData} updateFormData={updateFormData} onNext={handleNext} />;
+        return (
+          <PhoneVerificationStep
+            formData={formData}
+            updateFormData={updateFormData}
+            onNext={handleNext}
+            onBack={handleBack}
+          />
+        );
       case 2:
-        return <PhoneVerificationStep formData={formData} updateFormData={updateFormData} onNext={handleNext} onBack={handleBack} />;
+        return (
+          <CountrySelectionStep
+            formData={formData}
+            updateFormData={updateFormData}
+            onNext={handleNext}
+            onBack={handleBack}
+          />
+        );
       case 3:
-        return <CountrySelectionStep formData={formData} updateFormData={updateFormData} onNext={handleNext} onBack={handleBack} />;
+        return (
+          <CityLocalitySelectionStep
+            formData={formData}
+            updateFormData={updateFormData}
+            onNext={handleNext}
+            onBack={handleBack}
+          />
+        );
       case 4:
-        return <CityLocalitySelectionStep formData={formData} updateFormData={updateFormData} onNext={handleNext} onBack={handleBack} />;
+        return (
+          <PersonalityQuestionsStep
+            formData={formData}
+            updateFormData={updateFormData}
+            onNext={handleNext}
+            onBack={handleBack}
+          />
+        );
       case 5:
-        return <PersonalityQuestionsStep formData={formData} updateFormData={updateFormData} onNext={handleNext} onBack={handleBack} />;
+        return (
+          <StrangerPossibilityResultStep
+            formData={formData}
+            score={compatibilityScore}
+            onNext={handleNext}
+            onBack={handleBack}
+          />
+        );
       case 6:
-        return <StrangerPossibilityResultStep formData={formData} score={compatibilityScore} onNext={handleNext} onBack={handleBack} />;
+        return (
+          <IdentityQuestionsStep
+            formData={formData}
+            updateFormData={updateFormData}
+            onNext={handleNext}
+            onBack={handleBack}
+          />
+        );
       case 7:
-        return <IdentityQuestionsStep formData={formData} updateFormData={updateFormData} onNext={handleNext} onBack={handleBack} />;
+        return (
+          <UserDetailsStep
+            formData={formData}
+            updateFormData={updateFormData}
+            onNext={handleNext}
+            onBack={handleBack}
+          />
+        );
       case 8:
-        return <UserDetailsStep formData={formData} updateFormData={updateFormData} onNext={handleNext} onBack={handleBack} />;
-      case 9:
-        return <AccountCreationStep formData={formData} updateFormData={updateFormData} onNext={handleNext} onBack={handleBack} />;
-      case 10:
-        return <CompletionStep formData={formData} onNext={handleNext} onBack={handleBack} />;
-      case 11:
-        return <CompletionStep formData={formData} onNext={handleNext} onBack={handleBack} />;
+        return (
+          <CompletionStep
+            formData={formData}
+            onNext={handleNext}
+            onBack={handleBack}
+          />
+        );
+
       default:
         return null;
     }
@@ -532,11 +618,10 @@ export function ExclusiveOnboarding({ onComplete }) {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-red-700 via-red-500 to-red-600">
-      
       {/* Progress Bar */}
       <div className="absolute top-8 left-1/2 transform -translate-x-1/2 w-full max-w-md px-4">
         <div className="bg-black/10 rounded-full h-2 overflow-hidden backdrop-blur-sm">
-          <motion.div 
+          <motion.div
             className="h-full bg-black"
             initial={{ width: "0%" }}
             animate={{ width: `${(currentStep / totalSteps) * 100}%` }}
@@ -549,9 +634,7 @@ export function ExclusiveOnboarding({ onComplete }) {
         </div>
       </div>
 
-      <AnimatePresence mode="wait">
-        {getStepComponent()}
-      </AnimatePresence>
+      <AnimatePresence mode="wait">{getStepComponent()}</AnimatePresence>
     </div>
   );
 }
@@ -569,7 +652,7 @@ function MemberCheckStep({ formData, updateFormData, onNext }) {
     if (selectedOption !== null) {
       onNext();
     } else {
-      toast.error('Please select an option');
+      toast.error("Please select an option");
     }
   };
 
@@ -579,18 +662,20 @@ function MemberCheckStep({ formData, updateFormData, onNext }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       className="bg-white/95 backdrop-blur-lg rounded-3xl p-8 w-full max-w-2xl relative z-10 border border-white/30 min-h-[750px]"
-      style={{ backgroundColor: '#FFFFCC' }}
+      style={{ backgroundColor: "#FFFFCC" }}
     >
       <div className="text-center mb-8">
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+          transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
           className="text-6xl mb-4"
         >
           👋
         </motion.div>
-        <h2 className="text-3xl font-bold text-black mb-2">Welcome to bichance</h2>
+        <h2 className="text-3xl font-bold text-black mb-2">
+          Welcome to bichance
+        </h2>
         {/* <div className="italic text-lg md:text-xl font-serif text-center mb-4">WELCOME <span className="not-italic">TO BICHANCE</span></div> */}
         <p className="text-neutral-900">Are you already a member?</p>
       </div>
@@ -600,8 +685,8 @@ function MemberCheckStep({ formData, updateFormData, onNext }) {
           onClick={() => handleOptionSelect(true)}
           className={`w-full p-6 text-left rounded-xl border-2 transition-all ${
             selectedOption === true
-              ? 'border-purple-400 bg-purple-500/20 text-black'
-              : 'border-white/20 hover:border-purple-300 hover:bg-white/5 text-neutral-900'
+              ? "border-purple-400 bg-purple-500/20 text-black"
+              : "border-white/20 hover:border-purple-300 hover:bg-white/5 text-neutral-900"
           }`}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -609,8 +694,12 @@ function MemberCheckStep({ formData, updateFormData, onNext }) {
           <div className="flex items-center space-x-4">
             <span className="text-3xl">🎭</span>
             <div>
-              <h3 className="text-lg font-semibold mb-1 text-black">Yes, I'm already a member</h3>
-              <p className="text-sm text-neutral-900">Sign in to your existing account</p>
+              <h3 className="text-lg font-semibold mb-1 text-black">
+                Yes, I'm already a member
+              </h3>
+              <p className="text-sm text-neutral-900">
+                Sign in to your existing account
+              </p>
             </div>
           </div>
         </motion.button>
@@ -619,8 +708,8 @@ function MemberCheckStep({ formData, updateFormData, onNext }) {
           onClick={() => handleOptionSelect(false)}
           className={`w-full p-6 text-left rounded-xl border-2 transition-all ${
             selectedOption === false
-              ? 'border-purple-400 bg-purple-500/20 text-black'
-              : 'border-white/20 hover:border-purple-300 hover:bg-white/5 text-neutral-900'
+              ? "border-purple-400 bg-purple-500/20 text-black"
+              : "border-white/20 hover:border-purple-300 hover:bg-white/5 text-neutral-900"
           }`}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -628,8 +717,12 @@ function MemberCheckStep({ formData, updateFormData, onNext }) {
           <div className="flex items-center space-x-4">
             <span className="text-3xl">✨</span>
             <div>
-              <h3 className="text-lg font-semibold mb-1 text-black">No, I'm new here</h3>
-              <p className="text-sm text-neutral-900">Join our exclusive dining community</p>
+              <h3 className="text-lg font-semibold mb-1 text-black">
+                No, I'm new here
+              </h3>
+              <p className="text-sm text-neutral-900">
+                Join our exclusive dining community
+              </p>
             </div>
           </div>
         </motion.button>
@@ -650,8 +743,8 @@ function MemberCheckStep({ formData, updateFormData, onNext }) {
 
 // Step 2: Phone Verification & Login
 function PhoneVerificationStep({ formData, updateFormData, onNext, onBack }) {
-  const [phoneNumber, setPhoneNumber] = useState(formData.phoneNumber || '');
-  const [countryCode, setCountryCode] = useState('+65');
+  const [phoneNumber, setPhoneNumber] = useState(formData.phoneNumber || "");
+  const [countryCode, setCountryCode] = useState("+65");
   const [checking, setChecking] = useState(false);
   const [userExists, setUserExists] = useState(null);
   const [userStatus, setUserStatus] = useState(null);
@@ -659,60 +752,89 @@ function PhoneVerificationStep({ formData, updateFormData, onNext, onBack }) {
 
   const verifyOtpAndLogin = async (otp) => {
     try {
-      const response = await fetch('https://bichance-production-a30f.up.railway.app/api/v1/auth/verify-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'accept': 'application/json' },
-        body: JSON.stringify({ phone: `${countryCode}${phoneNumber}`, otp }),
-      });
+      const response = await fetch(
+        "https://bichance-production-a30f.up.railway.app/api/v1/auth/verify-otp",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            accept: "application/json",
+          },
+          body: JSON.stringify({ phone: `${countryCode}${phoneNumber}`, otp }),
+        }
+      );
       const data = await response.json();
       if (response.ok && data.access_token) {
         dispatch(login({ user: data.user, token: data.access_token }));
-        localStorage.setItem('token', data.access_token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        toast.success('OTP verified! You are now logged in.');
+        localStorage.setItem("token", data.access_token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        toast.success("OTP verified! You are now logged in.");
         onNext(); // Continue onboarding
       } else {
-        toast.error(data.message || 'OTP verification failed');
+        toast.error(data.message || "OTP verification failed");
       }
     } catch (err) {
-      toast.error('Network error. Please try again.');
+      toast.error("Network error. Please try again.");
     }
   };
 
   const checkPhoneNumber = async () => {
     if (phoneNumber.length < 8) {
-      toast.error('Please enter a valid phone number');
+      toast.error("Please enter a valid phone number");
       return;
     }
 
     setChecking(true);
     const fullNumber = `${countryCode}${phoneNumber}`;
+    const token =
+      localStorage.getItem("access_token") ||
+      localStorage.getItem("auth_token") ||
+      sessionStorage.getItem("token");
 
-    // For now, we'll assume all users are new and proceed with registration
-    // In production, you would check against your Supabase users table
     try {
-      // Simulate a brief check
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      // Call journey/save API with mobile number
+      const requestBody = {
+        question_key: "mobile",
+        answer: fullNumber,
+        question: "Your mobile number",
+      };
+      const res = await fetch(
+        "https://bichance-production-a30f.up.railway.app/api/v1/journey/save",
+        {
+          method: "POST",
+          headers: {
+            accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(requestBody),
+        }
+      );
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        toast.error(
+          "Failed to save mobile: " +
+            (errorData.detail || errorData.message || "")
+        );
+      }
+
       setUserExists(false);
-      updateFormData({ 
-        phoneNumber: fullNumber, 
-        userExists: false, 
-        canLogin: false 
+      updateFormData({
+        phoneNumber: fullNumber,
+        userExists: false,
+        canLogin: false,
       });
-      
-      toast.success('Phone number verified! Continuing with registration...');
+
+      toast.success("Phone number verified! Continuing with registration...");
       setTimeout(() => onNext(), 1000);
-      
     } catch (error) {
-      console.error('Phone verification error:', error);
-      // Continue anyway for demo
-      updateFormData({ 
-        phoneNumber: fullNumber, 
-        userExists: false, 
-        canLogin: false 
+      console.error("Phone verification error:", error);
+      updateFormData({
+        phoneNumber: fullNumber,
+        userExists: false,
+        canLogin: false,
       });
-      toast.success('Continuing with registration...');
+      toast.success("Continuing with registration...");
       setTimeout(() => onNext(), 1000);
     } finally {
       setChecking(false);
@@ -725,7 +847,7 @@ function PhoneVerificationStep({ formData, updateFormData, onNext, onBack }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       className="backdrop-blur-lg rounded-3xl p-8 w-full max-w-2xl min-h-[750px] mx-auto relative z-10 border border-white/20 shadow-xl"
-      style={{ backgroundColor: '#FFFFCC' }}
+      style={{ backgroundColor: "#FFFFCC" }}
     >
       <div className="text-center mb-8">
         <motion.div
@@ -736,11 +858,15 @@ function PhoneVerificationStep({ formData, updateFormData, onNext, onBack }) {
         >
           📱
         </motion.div>
-        <h2 className="text-3xl font-bold text-black mb-2">Your Phone Number</h2>
-        <div className="italic text-lg md:text-xl font-serif text-center mb-4">PHONE <span className="not-italic">VERIFICATION</span></div>
+        <h2 className="text-3xl font-bold text-black mb-2">
+          Your Phone Number
+        </h2>
+        <div className="italic text-lg md:text-xl font-serif text-center mb-4">
+          PHONE <span className="not-italic">VERIFICATION</span>
+        </div>
         <p className="text-neutral-900">
-          {formData.isExistingMember 
-            ? "We'll check if you're already in our system" 
+          {formData.isExistingMember
+            ? "We'll check if you're already in our system"
             : "We'll verify you're a new member"}
         </p>
       </div>
@@ -749,7 +875,7 @@ function PhoneVerificationStep({ formData, updateFormData, onNext, onBack }) {
         <label className="block text-black font-medium mb-4">
           Phone Number
         </label>
-        
+
         <div className="flex flex-col sm:flex-row sm:space-x-3 mb-4 w-full">
           <select
             value={countryCode}
@@ -757,7 +883,11 @@ function PhoneVerificationStep({ formData, updateFormData, onNext, onBack }) {
             className="bg-white/10 border border-white/30 rounded-xl px-4 py-3 text-black focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm w-full sm:w-1/3 mb-2 sm:mb-0"
           >
             {Object.entries(COUNTRY_CODES).map(([country, code]) => (
-              <option key={country} value={code} className="bg-gray-800 text-black">
+              <option
+                key={country}
+                value={code}
+                className="bg-gray-800 text-black"
+              >
                 {code} ({country})
               </option>
             ))}
@@ -765,7 +895,7 @@ function PhoneVerificationStep({ formData, updateFormData, onNext, onBack }) {
           <input
             type="tel"
             value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+            onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ""))}
             placeholder="87654321"
             className="flex-1 bg-white/10 border border-white/30 rounded-xl px-4 py-3 text-black placeholder-black/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm w-full"
           />
@@ -773,24 +903,32 @@ function PhoneVerificationStep({ formData, updateFormData, onNext, onBack }) {
 
         <div className="p-3 bg-blue-500/20 border border-blue-400/30 rounded-lg mb-4">
           <p className="text-blue-900 text-sm">
-            📱 Full number: <strong>{countryCode}{phoneNumber}</strong>
+            📱 Full number:{" "}
+            <strong>
+              {countryCode}
+              {phoneNumber}
+            </strong>
           </p>
         </div>
 
         {userExists !== null && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className={`p-4 rounded-lg border ${
-              userExists 
-                ? 'bg-green-500/20 border-green-400/30' 
-                : 'bg-blue-500/20 border-blue-400/30'
+              userExists
+                ? "bg-green-500/20 border-green-400/30"
+                : "bg-blue-500/20 border-blue-400/30"
             }`}
           >
-            <p className={`text-sm font-medium ${userExists ? 'text-green-900' : 'text-blue-900'}`}>
-              {userExists 
+            <p
+              className={`text-sm font-medium ${
+                userExists ? "text-green-900" : "text-blue-900"
+              }`}
+            >
+              {userExists
                 ? `✅ Account found! Status: ${userStatus}`
-                : '✨ New member - welcome to bichance!'}
+                : "✨ New member - welcome to bichance!"}
             </p>
           </motion.div>
         )}
@@ -805,7 +943,7 @@ function PhoneVerificationStep({ formData, updateFormData, onNext, onBack }) {
         >
           ← Back
         </motion.button>
-        
+
         <motion.button
           onClick={checkPhoneNumber}
           disabled={phoneNumber.length < 8 || checking}
@@ -823,7 +961,7 @@ function PhoneVerificationStep({ formData, updateFormData, onNext, onBack }) {
               Checking...
             </div>
           ) : (
-            'Verify Number →'
+            "Verify Number →"
           )}
         </motion.button>
       </div>
@@ -833,62 +971,88 @@ function PhoneVerificationStep({ formData, updateFormData, onNext, onBack }) {
 
 // Step 3: Country Selection
 function CountrySelectionStep({ formData, updateFormData, onNext, onBack }) {
-  const [selectedCountry, setSelectedCountry] = useState(formData.selectedCountry || '');
+  const [selectedCountry, setSelectedCountry] = useState(
+    formData.selectedCountry || ""
+  );
   const [availableCountries, setAvailableCountries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     setLoading(true);
-    fetch('https://bichance-production-a30f.up.railway.app/api/v1/geo/countries', {
-      headers: { 'accept': 'application/json' }
-    })
-      .then(res => res.json())
-      .then(data => {
+    fetch(
+      "https://bichance-production-a30f.up.railway.app/api/v1/geo/countries",
+      {
+        headers: { accept: "application/json" },
+      }
+    )
+      .then((res) => res.json())
+      .then((data) => {
         setAvailableCountries(data.data.countries || []);
         setLoading(false);
         console.log(data);
       })
-      .catch(err => {
-        setError('Failed to load countries');
+      .catch((err) => {
+        setError("Failed to load countries");
         setLoading(false);
       });
   }, []);
 
   const handleCountrySelect = (country) => {
     setSelectedCountry(country);
-    updateFormData({ 
+    updateFormData({
       selectedCountry: country,
-      selectedCity: '', // Reset city when country changes
-      selectedLocality: '' // Reset locality when country changes
+      selectedCity: "", // Reset city when country changes
+      selectedLocality: "", // Reset locality when country changes
     });
     // Save to journey
-    saveJourneyField('current_country', country, 'Where would you like to have your dinners?');
+    saveJourneyField(
+      "current_country",
+      country,
+      "Where would you like to have your dinners?"
+    );
     onNext(); // Immediately go to next step
   };
 
   return (
-    <motion.div className="bg-white rounded-2xl shadow-lg px-12 py-16 max-w-2xl w-full flex flex-col items-center border border-black/20 min-h-[800px] mx-auto relative" style={{ backgroundColor: '#FFFFCC' }}>
-      <button onClick={onBack} className="absolute left-4 top-4 text-black hover:text-gray-700 text-2xl font-bold focus:outline-none">←</button>
-      <div className="not-italic font-bold text-2xl md:text-3xl text-black text-center mb-2">Location</div>
-      <div className="italic text-lg md:text-xl font-serif text-center mb-4">WHERE WOULD YOU LIKE TO HAVE <span className="not-italic">YOUR DINNERS?</span></div>
-      <div className="text-center text-gray-700 mb-6">You can change it later</div>
+    <motion.div
+      className="bg-white rounded-2xl shadow-lg px-12 py-16 max-w-2xl w-full flex flex-col items-center border border-black/20 min-h-[800px] mx-auto relative"
+      style={{ backgroundColor: "#FFFFCC" }}
+    >
+      <button
+        onClick={onBack}
+        className="absolute left-4 top-4 text-black hover:text-gray-700 text-2xl font-bold focus:outline-none"
+      >
+        ←
+      </button>
+      <div className="not-italic font-bold text-2xl md:text-3xl text-black text-center mb-2">
+        Location
+      </div>
+      <div className="italic text-lg md:text-xl font-serif text-center mb-4">
+        WHERE WOULD YOU LIKE TO HAVE{" "}
+        <span className="not-italic">YOUR DINNERS?</span>
+      </div>
+      <div className="text-center text-gray-700 mb-6">
+        You can change it later
+      </div>
       {loading ? (
         <div className="text-center text-gray-500">Loading countries...</div>
       ) : error ? (
         <div className="text-center text-red-500">{error}</div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full">
-          {availableCountries.map(country => (
+          {availableCountries.map((country) => (
             <button
               key={country}
               onClick={() => handleCountrySelect(country)}
               className={`rounded-xl p-5 border-2 flex flex-col items-center justify-center shadow-md text-center transition-all
-                ${selectedCountry === country
-                  ? 'bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105 font-extrabold'
-                  : 'bg-white border-gray-300 hover:border-red-400 hover:bg-gray-50 font-semibold'}
+                ${
+                  selectedCountry === country
+                    ? "bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105 font-extrabold"
+                    : "bg-white border-gray-300 hover:border-red-400 hover:bg-gray-50 font-semibold"
+                }
               `}
-              style={{ transition: 'all 0.2s' }}
+              style={{ transition: "all 0.2s" }}
             >
               <span>{country}</span>
             </button>
@@ -896,15 +1060,22 @@ function CountrySelectionStep({ formData, updateFormData, onNext, onBack }) {
         </div>
       )}
       <div className="flex justify-between w-full mt-8">
-        <button onClick={onBack} className="btn btn-ghost">Back</button>
+        <button onClick={onBack} className="btn btn-ghost">
+          Back
+        </button>
       </div>
     </motion.div>
   );
 }
 
 // Step 4: City and Locality Selection
-function CityLocalitySelectionStep({ formData, updateFormData, onNext, onBack }) {
-  const [selectedCity, setSelectedCity] = useState(formData.selectedCity || '');
+function CityLocalitySelectionStep({
+  formData,
+  updateFormData,
+  onNext,
+  onBack,
+}) {
+  const [selectedCity, setSelectedCity] = useState(formData.selectedCity || "");
   const [availableCities, setAvailableCities] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -913,21 +1084,29 @@ function CityLocalitySelectionStep({ formData, updateFormData, onNext, onBack })
   useEffect(() => {
     if (selectedCountry) {
       setLoading(true);
-      fetch('https://bichance-production-a30f.up.railway.app/api/v1/geo/country', {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ country: selectedCountry })
-      })
-        .then(res => res.json())
-        .then(data => {
-          setAvailableCities((data.data.cities || []).map(city => ({ name: city, localities: [] })));
+      fetch(
+        "https://bichance-production-a30f.up.railway.app/api/v1/geo/country",
+        {
+          method: "POST",
+          headers: {
+            accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ country: selectedCountry }),
+        }
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          setAvailableCities(
+            (data.data.cities || []).map((city) => ({
+              name: city,
+              localities: [],
+            }))
+          );
           setLoading(false);
         })
-        .catch(err => {
-          setError('Failed to load cities');
+        .catch((err) => {
+          setError("Failed to load cities");
           setLoading(false);
         });
     } else {
@@ -937,38 +1116,54 @@ function CityLocalitySelectionStep({ formData, updateFormData, onNext, onBack })
 
   const handleCitySelect = (cityName) => {
     setSelectedCity(cityName);
-    updateFormData({ 
+    updateFormData({
       selectedCity: cityName,
-      selectedLocality: '',
-      isLocationSupported: true // Cities in our data are supported
+      selectedLocality: "",
+      isLocationSupported: true, // Cities in our data are supported
     });
     // Save to journey
-    saveJourneyField('current_city', cityName, 'Select city');
+    saveJourneyField("current_city", cityName, "Select city");
     onNext(); // Immediately go to next step
   };
 
   return (
-    <motion.div className="bg-white rounded-2xl shadow-lg px-12 py-16 max-w-2xl w-full flex flex-col items-center border border-black/20 min-h-[800px] mx-auto relative" style={{ backgroundColor: '#FFFFCC' }}>
-      <button onClick={onBack} className="absolute left-4 top-4 text-black hover:text-gray-700 text-2xl font-bold focus:outline-none">←</button>
-      <div className="font-bold text-2xl md:text-3xl text-black text-center mb-2">Location</div>
-      <div className="italic text-lg md:text-xl font-serif text-center mb-4">SELECT <span className="not-italic">CITY</span></div>
-      <div className="text-center text-gray-700 mb-6">You can change it later</div>
+    <motion.div
+      className="bg-white rounded-2xl shadow-lg px-12 py-16 max-w-2xl w-full flex flex-col items-center border border-black/20 min-h-[800px] mx-auto relative"
+      style={{ backgroundColor: "#FFFFCC" }}
+    >
+      <button
+        onClick={onBack}
+        className="absolute left-4 top-4 text-black hover:text-gray-700 text-2xl font-bold focus:outline-none"
+      >
+        ←
+      </button>
+      <div className="font-bold text-2xl md:text-3xl text-black text-center mb-2">
+        Location
+      </div>
+      <div className="italic text-lg md:text-xl font-serif text-center mb-4">
+        SELECT <span className="not-italic">CITY</span>
+      </div>
+      <div className="text-center text-gray-700 mb-6">
+        You can change it later
+      </div>
       {loading ? (
         <div className="text-center text-gray-500">Loading cities...</div>
       ) : error ? (
         <div className="text-center text-red-500">{error}</div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full">
-          {availableCities.map(city => (
+          {availableCities.map((city) => (
             <motion.button
               key={city.name}
               onClick={() => handleCitySelect(city.name)}
               className={`rounded-xl p-7 border-2 flex flex-col items-center justify-center shadow-md text-center transition-all
-                ${selectedCity === city.name
-                  ? 'bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105 font-extrabold'
-                  : 'bg-white border-gray-300 hover:border-red-400 hover:bg-gray-50 font-semibold'}
+                ${
+                  selectedCity === city.name
+                    ? "bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105 font-extrabold"
+                    : "bg-white border-gray-300 hover:border-red-400 hover:bg-gray-50 font-semibold"
+                }
               `}
-              style={{ transition: 'all 0.2s cubic-bezier(0.4,0,0.2,1)' }}
+              style={{ transition: "all 0.2s cubic-bezier(0.4,0,0.2,1)" }}
               whileHover={{ scale: 1.07 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -980,44 +1175,20 @@ function CityLocalitySelectionStep({ formData, updateFormData, onNext, onBack })
         </div>
       )}
       <div className="flex justify-between w-full mt-8">
-        <button onClick={onBack} className="btn btn-ghost">Back</button>
+        <button onClick={onBack} className="btn btn-ghost">
+          Back
+        </button>
       </div>
     </motion.div>
   );
 }
-
-// Step 5: User Details
 function UserDetailsStep({ formData, updateFormData, onNext, onBack }) {
-  const { email: authEmail } = useSelector((state) => state.auth.user || {});
-  const [details, setDetails] = useState(formData.userDetails || {
-    firstName: '',
-    lastName: '',
-    email: '',
-    gender: ''
-  });
-
-  // Get email from all possible sources
-  const getBestEmail = () => {
-    if (formData.email) return formData.email;
-    if (formData.userDetails && formData.userDetails.email) return formData.userDetails.email;
-    const userData = localStorage.getItem('user_data');
-    if (userData) {
-      try {
-        const parsed = JSON.parse(userData);
-        if (parsed.email) return parsed.email;
-      } catch (e) {}
+  const [details, setDetails] = useState(
+    formData.userDetails || {
+      firstName: "",
+      lastName: "",
     }
-    if (authEmail) return authEmail;
-    return '';
-  };
-
-  useEffect(() => {
-    const bestEmail = getBestEmail();
-    if (bestEmail && !details.email) {
-      setDetails((prev) => ({ ...prev, email: bestEmail }));
-      updateFormData({ userDetails: { ...details, email: bestEmail } });
-    }
-  }, [formData.email, formData.userDetails, authEmail]);
+  );
 
   const handleDetailsChange = (field, value) => {
     const newDetails = { ...details, [field]: value };
@@ -1025,11 +1196,39 @@ function UserDetailsStep({ formData, updateFormData, onNext, onBack }) {
     updateFormData({ userDetails: newDetails });
   };
 
-  const handleContinue = () => {
-    if (details.firstName && details.lastName && details.email && details.gender) {
+  const handleContinue = async () => {
+    if (details.firstName && details.lastName) {
+      // Save name to journey API
+      const token =
+        localStorage.getItem("access_token") ||
+        localStorage.getItem("auth_token") ||
+        sessionStorage.getItem("token");
+      if (token) {
+        try {
+          const requestBody = {
+            question_key: "name",
+            answer: `${details.firstName} ${details.lastName}`.trim(),
+            question: "Your full name",
+          };
+          await fetch(
+            "https://bichance-production-a30f.up.railway.app/api/v1/journey/save",
+            {
+              method: "POST",
+              headers: {
+                accept: "application/json",
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify(requestBody),
+            }
+          );
+        } catch (err) {
+          toast.error("Failed to save name");
+        }
+      }
       onNext();
     } else {
-      toast.error('Please fill in all required fields');
+      toast.error("Please fill in all required fields");
     }
   };
 
@@ -1039,10 +1238,15 @@ function UserDetailsStep({ formData, updateFormData, onNext, onBack }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       className="bg-white rounded-2xl shadow-lg px-12 py-16 w-full max-w-2xl flex flex-col items-center justify-center min-h-[800px] mx-auto relative"
-      style={{ backgroundColor: '#FFFFCC' }}
+      style={{ backgroundColor: "#FFFFCC" }}
     >
       {/* Back Arrow */}
-      <button onClick={onBack} className="absolute left-6 top-6 text-black hover:text-gray-700 text-2xl font-bold focus:outline-none">←</button>
+      <button
+        onClick={onBack}
+        className="absolute left-6 top-6 text-black hover:text-gray-700 text-2xl font-bold focus:outline-none"
+      >
+        ←
+      </button>
       <div className="text-center mb-8">
         <motion.div
           initial={{ scale: 0 }}
@@ -1053,61 +1257,36 @@ function UserDetailsStep({ formData, updateFormData, onNext, onBack }) {
           ✨
         </motion.div>
         <h2 className="text-3xl font-bold text-black mb-2">Almost Done!</h2>
-        <div className="italic text-lg md:text-xl font-serif text-center mb-4">FINAL <span className="not-italic">DETAILS</span></div>
+        <div className="italic text-lg md:text-xl font-serif text-center mb-4">
+          FINAL <span className="not-italic">DETAILS</span>
+        </div>
         <p className="text-neutral-900">Just a few final details</p>
       </div>
 
       <div className="space-y-6 mb-8">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-black font-medium mb-2">First Name *</label>
+            <label className="block text-black font-medium mb-2">
+              First Name *
+            </label>
             <input
               type="text"
               value={details.firstName}
-              onChange={(e) => handleDetailsChange('firstName', e.target.value)}
+              onChange={(e) => handleDetailsChange("firstName", e.target.value)}
               className="w-full bg-white/10 border border-white/30 rounded-xl px-4 py-3 text-black placeholder-black/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm"
             />
           </div>
-          
+
           <div>
-            <label className="block text-black font-medium mb-2">Last Name *</label>
+            <label className="block text-black font-medium mb-2">
+              Last Name *
+            </label>
             <input
               type="text"
               value={details.lastName}
-              onChange={(e) => handleDetailsChange('lastName', e.target.value)}
+              onChange={(e) => handleDetailsChange("lastName", e.target.value)}
               className="w-full bg-white/10 border border-white/30 rounded-xl px-4 py-3 text-black placeholder-black/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm"
             />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-black font-medium mb-2">Email Address *</label>
-          <input
-            type="email"
-            value={details.email}
-            onChange={(e) => handleDetailsChange('email', e.target.value)}
-            className="w-full bg-white/10 border border-white/30 rounded-xl px-4 py-3 text-black placeholder-black/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm"
-          />
-        </div>
-
-        <div>
-          <label className="block text-black font-medium mb-3">Gender *</label>
-          <div className="grid grid-cols-3 gap-3">
-            {['Woman', 'Man', 'Non-binary'].map(option => (
-              <motion.button
-                key={option}
-                onClick={() => handleDetailsChange('gender', option)}
-                className={`p-3 text-center rounded-xl border transition-all ${
-                  details.gender === option 
-                    ? 'border-red-600 bg-gradient-to-r from-red-500 to-red-700 text-white' 
-                    : 'border-white/20 hover:border-red-400 hover:bg-white/10 text-black/80'
-                }`}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                {option}
-              </motion.button>
-            ))}
           </div>
         </div>
       </div>
@@ -1121,10 +1300,10 @@ function UserDetailsStep({ formData, updateFormData, onNext, onBack }) {
         >
           ← Back
         </motion.button>
-        
+
         <motion.button
           onClick={handleContinue}
-          disabled={!details.firstName || !details.lastName || !details.email || !details.gender}
+          disabled={!details.firstName || !details.lastName}
           className="flex-1 bg-gradient-to-r from-red-500 to-red-700 text-white py-4 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
           whileHover={{ scale: 1.02, y: -2 }}
           whileTap={{ scale: 0.98 }}
@@ -1140,17 +1319,20 @@ function UserDetailsStep({ formData, updateFormData, onNext, onBack }) {
 // Account Creation Step (Step 7)
 const AccountCreationStep = ({ formData, updateFormData, onNext, onBack }) => {
   const { email: authEmail } = useSelector((state) => state.auth.user || {});
-  const [email, setEmail] = useState(formData.email || '');
-  const [password, setPassword] = useState(formData.password || '');
-  const [confirmPassword, setConfirmPassword] = useState(formData.confirmPassword || '');
-  const [emailError, setEmailError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
+  const [email, setEmail] = useState(formData.email || "");
+  const [password, setPassword] = useState(formData.password || "");
+  const [confirmPassword, setConfirmPassword] = useState(
+    formData.confirmPassword || ""
+  );
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   // Get email from all possible sources
   const getBestEmail = () => {
     if (formData.email) return formData.email;
-    if (formData.userDetails && formData.userDetails.email) return formData.userDetails.email;
-    const userData = localStorage.getItem('user_data');
+    if (formData.userDetails && formData.userDetails.email)
+      return formData.userDetails.email;
+    const userData = localStorage.getItem("user_data");
     if (userData) {
       try {
         const parsed = JSON.parse(userData);
@@ -1158,7 +1340,7 @@ const AccountCreationStep = ({ formData, updateFormData, onNext, onBack }) => {
       } catch (e) {}
     }
     if (authEmail) return authEmail;
-    return '';
+    return "";
   };
 
   useEffect(() => {
@@ -1179,31 +1361,31 @@ const AccountCreationStep = ({ formData, updateFormData, onNext, onBack }) => {
   };
 
   const handleContinue = () => {
-    setEmailError('');
-    setPasswordError('');
+    setEmailError("");
+    setPasswordError("");
 
     if (!email) {
-      setEmailError('Email is required');
+      setEmailError("Email is required");
       return;
     }
 
     if (!validateEmail(email)) {
-      setEmailError('Please enter a valid email address');
+      setEmailError("Please enter a valid email address");
       return;
     }
 
     if (!password) {
-      setPasswordError('Password is required');
+      setPasswordError("Password is required");
       return;
     }
 
     if (!validatePassword(password)) {
-      setPasswordError('Password must be at least 8 characters long');
+      setPasswordError("Password must be at least 8 characters long");
       return;
     }
 
     if (password !== confirmPassword) {
-      setPasswordError('Passwords do not match');
+      setPasswordError("Passwords do not match");
       return;
     }
 
@@ -1219,25 +1401,35 @@ const AccountCreationStep = ({ formData, updateFormData, onNext, onBack }) => {
       exit={{ opacity: 0, x: -50 }}
       transition={{ duration: 0.5 }}
       className="bg-white/95 backdrop-blur-lg rounded-3xl p-8 w-full max-w-2xl relative z-10 border border-white/30 text-center"
-      style={{ backgroundColor: '#FFFFCC' }}
+      style={{ backgroundColor: "#FFFFCC" }}
     >
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-black mb-2">Create Your Account</h2>
-        <div className="italic text-lg md:text-xl font-serif text-center mb-4">ACCOUNT <span className="not-italic">CREATION</span></div>
-        <p className="text-neutral-900">Set up your login credentials to complete registration</p>
+        <h2 className="text-3xl font-bold text-black mb-2">
+          Create Your Account
+        </h2>
+        <div className="italic text-lg md:text-xl font-serif text-center mb-4">
+          ACCOUNT <span className="not-italic">CREATION</span>
+        </div>
+        <p className="text-neutral-900">
+          Set up your login credentials to complete registration
+        </p>
       </div>
 
       <div className="space-y-6">
         {/* Email Input */}
         <div className="text-left">
-          <label className="block text-black font-medium mb-2">Email Address</label>
+          <label className="block text-black font-medium mb-2">
+            Email Address
+          </label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="your.email@example.com"
             className={`w-full p-4 rounded-lg border-2 bg-white/10 backdrop-blur-sm text-black placeholder-black/50 focus:outline-none transition-colors ${
-              emailError ? 'border-red-400' : 'border-white/20 focus:border-purple-400'
+              emailError
+                ? "border-red-400"
+                : "border-white/20 focus:border-purple-400"
             }`}
           />
           {emailError && (
@@ -1254,22 +1446,30 @@ const AccountCreationStep = ({ formData, updateFormData, onNext, onBack }) => {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Create a secure password"
             className={`w-full p-4 rounded-lg border-2 bg-white/10 backdrop-blur-sm text-black placeholder-black/50 focus:outline-none transition-colors ${
-              passwordError ? 'border-red-400' : 'border-white/20 focus:border-purple-400'
+              passwordError
+                ? "border-red-400"
+                : "border-white/20 focus:border-purple-400"
             }`}
           />
-          <p className="text-black/60 text-xs mt-1">Must be at least 8 characters long</p>
+          <p className="text-black/60 text-xs mt-1">
+            Must be at least 8 characters long
+          </p>
         </div>
 
         {/* Confirm Password Input */}
         <div className="text-left">
-          <label className="block text-black font-medium mb-2">Confirm Password</label>
+          <label className="block text-black font-medium mb-2">
+            Confirm Password
+          </label>
           <input
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="Confirm your password"
             className={`w-full p-4 rounded-lg border-2 bg-white/10 backdrop-blur-sm text-black placeholder-black/50 focus:outline-none transition-colors ${
-              passwordError ? 'border-red-400' : 'border-white/20 focus:border-purple-400'
+              passwordError
+                ? "border-red-400"
+                : "border-white/20 focus:border-purple-400"
             }`}
           />
           {passwordError && (
@@ -1310,7 +1510,7 @@ const CompletionStep = ({ formData, onNext, onBack }) => {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       className="bg-white/95 backdrop-blur-lg rounded-3xl p-8 w-full max-w-2xl relative z-10 border border-white/30"
-      style={{ backgroundColor: '#FFFFCC' }}
+      style={{ backgroundColor: "#FFFFCC" }}
     >
       <motion.div
         initial={{ scale: 0 }}
@@ -1324,15 +1524,15 @@ const CompletionStep = ({ formData, onNext, onBack }) => {
       <h1 className="text-4xl font-bold text-black mb-4">
         Registration Complete!
       </h1>
-      
+
       <p className="text-xl text-black/70 mb-8">
-        {formData.isLocationSupported 
+        {formData.isLocationSupported
           ? "Welcome to the bichance community! We'll review your application and get back to you within 24-48 hours."
           : "Thanks for your interest! We'll notify you as soon as we launch in your city."}
       </p>
 
       <motion.button
-        onClick={() => navigate('/dashboard')}
+        onClick={() => navigate("/dashboard")}
         className="bg-gradient-to-r from-red-500 to-red-700 text-white px-12 py-4 rounded-xl text-xl font-bold shadow-xl hover:shadow-2xl transition-all duration-300"
         whileHover={{ scale: 1.05, y: -3 }}
         whileTap={{ scale: 0.95 }}
@@ -1341,14 +1541,18 @@ const CompletionStep = ({ formData, onNext, onBack }) => {
       </motion.button>
     </motion.div>
   );
-}
+};
 
 // Registration Success Screen
 export function ExclusiveRegistrationSuccess({ profileData }) {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" 
-         style={{ background: 'linear-gradient(135deg, #0F0F23 0%, #1A1B3A 50%, #2D2E5F 100%)' }}>
-      
+    <div
+      className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
+      style={{
+        background:
+          "linear-gradient(135deg, #0F0F23 0%, #1A1B3A 50%, #2D2E5F 100%)",
+      }}
+    >
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -1366,38 +1570,45 @@ export function ExclusiveRegistrationSuccess({ profileData }) {
         <h1 className="text-4xl font-bold text-black mb-4">
           Application Under Review
         </h1>
-        
+
         <p className="text-xl text-black/70 mb-8">
-          Thank you for joining bichance! Our team will review your profile and get back to you.
+          Thank you for joining bichance! Our team will review your profile and
+          get back to you.
         </p>
 
         <div className="bg-gradient-to-r from-red-500/20 to-red-500/20 rounded-2xl p-6 border border-red-400/30">
           <h3 className="text-lg font-semibold text-red-200 mb-3">
             🔍 What's Next?
           </h3>
-          
+
           <div className="text-left space-y-3">
             <div className="flex items-start space-x-3">
               <span className="text-red-400 mt-1">1.</span>
               <div>
                 <p className="text-black font-medium">Review Process</p>
-                <p className="text-black/70 text-sm">Our team will carefully review your application</p>
+                <p className="text-black/70 text-sm">
+                  Our team will carefully review your application
+                </p>
               </div>
             </div>
-            
+
             <div className="flex items-start space-x-3">
               <span className="text-red-400 mt-1">2.</span>
               <div>
                 <p className="text-black font-medium">Phone Verification</p>
-                <p className="text-black/70 text-sm">We'll send a WhatsApp message to verify your number</p>
+                <p className="text-black/70 text-sm">
+                  We'll send a WhatsApp message to verify your number
+                </p>
               </div>
             </div>
-            
+
             <div className="flex items-start space-x-3">
               <span className="text-red-400 mt-1">3.</span>
               <div>
                 <p className="text-black font-medium">Decision</p>
-                <p className="text-black/70 text-sm">You'll hear back from us within 24-48 hours</p>
+                <p className="text-black/70 text-sm">
+                  You'll hear back from us within 24-48 hours
+                </p>
               </div>
             </div>
           </div>
@@ -1409,7 +1620,7 @@ export function ExclusiveRegistrationSuccess({ profileData }) {
 
 // Enhanced Admin Panel (keeping existing functionality)
 export function EnhancedAdminPanel() {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [dashboardData, setDashboardData] = useState(null);
   const [users, setUsers] = useState([]);
   const [restaurants, setRestaurants] = useState([]);
@@ -1418,24 +1629,24 @@ export function EnhancedAdminPanel() {
 
   const fetchDashboardData = async () => {
     try {
-      const token = localStorage.getItem('admin_token');
+      const token = localStorage.getItem("admin_token");
       const response = await fetch(`${API_BASE_URL}/admin/dashboard/metrics`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (response.ok) {
         const data = await response.json();
         setDashboardData(data);
       }
     } catch (error) {
-      console.error('Failed to fetch dashboard data:', error);
+      console.error("Failed to fetch dashboard data:", error);
     }
   };
 
   const fetchUsers = async () => {
     try {
-      const token = localStorage.getItem('admin_token');
+      const token = localStorage.getItem("admin_token");
       const response = await fetch(`${API_BASE_URL}/admin/users`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (response.ok) {
         const data = await response.json();
@@ -1445,16 +1656,16 @@ export function EnhancedAdminPanel() {
         setUsers([]);
       }
     } catch (error) {
-      console.error('Failed to fetch users:', error);
+      console.error("Failed to fetch users:", error);
       setUsers([]);
     }
   };
 
   const fetchRestaurants = async () => {
     try {
-      const token = localStorage.getItem('admin_token');
+      const token = localStorage.getItem("admin_token");
       const response = await fetch(`${API_BASE_URL}/admin/restaurants`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (response.ok) {
         const data = await response.json();
@@ -1463,16 +1674,16 @@ export function EnhancedAdminPanel() {
         setRestaurants([]);
       }
     } catch (error) {
-      console.error('Failed to fetch restaurants:', error);
+      console.error("Failed to fetch restaurants:", error);
       setRestaurants([]);
     }
   };
 
   const fetchBookings = async () => {
     try {
-      const token = localStorage.getItem('admin_token');
+      const token = localStorage.getItem("admin_token");
       const response = await fetch(`${API_BASE_URL}/admin/bookings`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (response.ok) {
         const data = await response.json();
@@ -1481,7 +1692,7 @@ export function EnhancedAdminPanel() {
         setBookings([]);
       }
     } catch (error) {
-      console.error('Failed to fetch bookings:', error);
+      console.error("Failed to fetch bookings:", error);
       setBookings([]);
     }
   };
@@ -1491,18 +1702,18 @@ export function EnhancedAdminPanel() {
   }, []);
 
   useEffect(() => {
-    if (activeTab === 'users') fetchUsers();
-    else if (activeTab === 'restaurants') fetchRestaurants();
-    else if (activeTab === 'bookings') fetchBookings();
+    if (activeTab === "users") fetchUsers();
+    else if (activeTab === "restaurants") fetchRestaurants();
+    else if (activeTab === "bookings") fetchBookings();
   }, [activeTab]);
 
   const tabs = [
-    { id: 'dashboard', name: 'Dashboard', icon: '📊' },
-    { id: 'users', name: 'Users', icon: '👥' },
-    { id: 'restaurants', name: 'Restaurants', icon: '🍽️' },
-    { id: 'bookings', name: 'Bookings', icon: '📅' },
-    { id: 'matching', name: 'Matching', icon: '🧠' },
-    { id: 'reports', name: 'Reports', icon: '📈' }
+    { id: "dashboard", name: "Dashboard", icon: "📊" },
+    { id: "users", name: "Users", icon: "👥" },
+    { id: "restaurants", name: "Restaurants", icon: "🍽️" },
+    { id: "bookings", name: "Bookings", icon: "📅" },
+    { id: "matching", name: "Matching", icon: "🧠" },
+    { id: "reports", name: "Reports", icon: "📈" },
   ];
 
   return (
@@ -1512,7 +1723,9 @@ export function EnhancedAdminPanel() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">bichance Admin</h1>
+              <h1 className="text-2xl font-bold text-gray-900">
+                bichance Admin
+              </h1>
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-gray-700">Administrator</span>
@@ -1520,7 +1733,7 @@ export function EnhancedAdminPanel() {
                 className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
                 whileHover={{ scale: 1.05 }}
                 onClick={() => {
-                  localStorage.removeItem('admin_token');
+                  localStorage.removeItem("admin_token");
                   window.location.reload();
                 }}
               >
@@ -1536,14 +1749,14 @@ export function EnhancedAdminPanel() {
         <div className="mb-8">
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8">
-              {tabs.map(tab => (
+              {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
                     activeTab === tab.id
-                      ? 'border-purple-500 text-purple-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? "border-purple-500 text-purple-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                   }`}
                 >
                   <span className="mr-2">{tab.icon}</span>
@@ -1555,46 +1768,78 @@ export function EnhancedAdminPanel() {
         </div>
 
         {/* Dashboard Tab */}
-        {activeTab === 'dashboard' && (
+        {activeTab === "dashboard" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              {dashboardData && [
-                { title: 'Total Users', value: dashboardData.total_users, icon: '👥', color: 'bg-blue-500' },
-                { title: 'Active Users', value: dashboardData.active_users, icon: '🟢', color: 'bg-green-500' },
-                { title: 'Total Bookings', value: dashboardData.total_bookings, icon: '📅', color: 'bg-purple-500' },
-                { title: 'Revenue', value: `$${dashboardData.revenue_this_period.toLocaleString()}`, icon: '💰', color: 'bg-yellow-500' }
-              ].map((metric, index) => (
-                <motion.div
-                  key={metric.title}
-                  className="bg-white rounded-lg shadow p-6"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <div className="flex items-center">
-                    <div className={`${metric.color} rounded-lg p-3 mr-4`}>
-                      <span className="text-white text-2xl">{metric.icon}</span>
+              {dashboardData &&
+                [
+                  {
+                    title: "Total Users",
+                    value: dashboardData.total_users,
+                    icon: "👥",
+                    color: "bg-blue-500",
+                  },
+                  {
+                    title: "Active Users",
+                    value: dashboardData.active_users,
+                    icon: "🟢",
+                    color: "bg-green-500",
+                  },
+                  {
+                    title: "Total Bookings",
+                    value: dashboardData.total_bookings,
+                    icon: "📅",
+                    color: "bg-purple-500",
+                  },
+                  {
+                    title: "Revenue",
+                    value: `$${dashboardData.revenue_this_period.toLocaleString()}`,
+                    icon: "💰",
+                    color: "bg-yellow-500",
+                  },
+                ].map((metric, index) => (
+                  <motion.div
+                    key={metric.title}
+                    className="bg-white rounded-lg shadow p-6"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <div className="flex items-center">
+                      <div className={`${metric.color} rounded-lg p-3 mr-4`}>
+                        <span className="text-white text-2xl">
+                          {metric.icon}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">{metric.title}</p>
+                        <p className="text-2xl font-bold">{metric.value}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-600">{metric.title}</p>
-                      <p className="text-2xl font-bold">{metric.value}</p>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                ))}
             </div>
 
             {dashboardData && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white rounded-lg shadow p-6">
-                  <h3 className="text-lg font-semibold mb-4">Revenue by Package</h3>
+                  <h3 className="text-lg font-semibold mb-4">
+                    Revenue by Package
+                  </h3>
                   <div className="space-y-3">
-                    {Object.entries(dashboardData.revenue_by_package).map(([package_type, revenue]) => (
-                      <div key={package_type} className="flex justify-between items-center">
-                        <span className="capitalize">{package_type}</span>
-                        <span className="font-semibold">${revenue.toLocaleString()}</span>
-                      </div>
-                    ))}
+                    {Object.entries(dashboardData.revenue_by_package).map(
+                      ([package_type, revenue]) => (
+                        <div
+                          key={package_type}
+                          className="flex justify-between items-center"
+                        >
+                          <span className="capitalize">{package_type}</span>
+                          <span className="font-semibold">
+                            ${revenue.toLocaleString()}
+                          </span>
+                        </div>
+                      )
+                    )}
                   </div>
                 </div>
 
@@ -1603,15 +1848,21 @@ export function EnhancedAdminPanel() {
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span>Retention Rate</span>
-                      <span className="font-semibold">{dashboardData.user_retention_rate}%</span>
+                      <span className="font-semibold">
+                        {dashboardData.user_retention_rate}%
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Cancellation Rate</span>
-                      <span className="font-semibold">{dashboardData.cancellation_rate}%</span>
+                      <span className="font-semibold">
+                        {dashboardData.cancellation_rate}%
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Customer Satisfaction</span>
-                      <span className="font-semibold">{dashboardData.customer_satisfaction}/5</span>
+                      <span className="font-semibold">
+                        {dashboardData.customer_satisfaction}/5
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1621,7 +1872,7 @@ export function EnhancedAdminPanel() {
         )}
 
         {/* Users Tab */}
-        {activeTab === 'users' && (
+        {activeTab === "users" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <div className="bg-white rounded-lg shadow">
               <div className="px-6 py-4 border-b">
@@ -1630,46 +1881,72 @@ export function EnhancedAdminPanel() {
                   {users.length} total users found
                 </p>
               </div>
-              
+
               {users.length === 0 ? (
                 <div className="p-8 text-center">
                   <div className="text-gray-400 text-lg mb-2">👥</div>
                   <p className="text-gray-500">No users found</p>
-                  <p className="text-sm text-gray-400 mt-1">Users will appear here once they register</p>
+                  <p className="text-sm text-gray-400 mt-1">
+                    Users will appear here once they register
+                  </p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Registration</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Activity</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Spending</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          User
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Registration
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Activity
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Spending
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                      {users.map(user => (
+                      {users.map((user) => (
                         <tr key={user.user_id || user.id}>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div>
-                              <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                              <div className="text-sm text-gray-500">{user.email}</div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {user.name}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {user.email}
+                              </div>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {user.registration_date ? new Date(user.registration_date).toLocaleDateString() : 'N/A'}
+                            {user.registration_date
+                              ? new Date(
+                                  user.registration_date
+                                ).toLocaleDateString()
+                              : "N/A"}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{user.total_bookings || 0} bookings</div>
-                            <div className="text-sm text-gray-500">{user.completed_dinners || 0} completed</div>
+                            <div className="text-sm text-gray-900">
+                              {user.total_bookings || 0} bookings
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {user.completed_dinners || 0} completed
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             ${(user.total_spent || 0).toLocaleString()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <button className="text-purple-600 hover:text-purple-900 text-sm">View Details</button>
+                            <button className="text-purple-600 hover:text-purple-900 text-sm">
+                              View Details
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -1682,14 +1959,18 @@ export function EnhancedAdminPanel() {
         )}
 
         {/* Other tabs content */}
-        {activeTab !== 'dashboard' && activeTab !== 'users' && (
-          <motion.div 
-            initial={{ opacity: 0 }} 
+        {activeTab !== "dashboard" && activeTab !== "users" && (
+          <motion.div
+            initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="bg-white rounded-lg shadow p-8 text-center"
           >
-            <h3 className="text-xl font-semibold mb-2">{tabs.find(t => t.id === activeTab)?.name} Panel</h3>
-            <p className="text-gray-600">This section is under development. Full functionality coming soon!</p>
+            <h3 className="text-xl font-semibold mb-2">
+              {tabs.find((t) => t.id === activeTab)?.name} Panel
+            </h3>
+            <p className="text-gray-600">
+              This section is under development. Full functionality coming soon!
+            </p>
           </motion.div>
         )}
       </div>
@@ -1698,79 +1979,102 @@ export function EnhancedAdminPanel() {
 }
 
 // Export AdminPanel component
-export { default as AdminPanel } from './components/AdminPanel';
+export { default as AdminPanel } from "./components/AdminPanel";
 
 // Add PersonalityQuestionsStep (1-10 scale, 15 questions)
-function PersonalityQuestionsStep({ formData, updateFormData, onNext, onBack }) {
+function PersonalityQuestionsStep({
+  formData,
+  updateFormData,
+  onNext,
+  onBack,
+}) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState(formData.personalityAnswers || {});
-  const isLastQuestion = currentQuestionIndex === ONBOARDING_QUESTIONS.length - 1;
+  const isLastQuestion =
+    currentQuestionIndex === ONBOARDING_QUESTIONS.length - 1;
   const currentQuestion = ONBOARDING_QUESTIONS[currentQuestionIndex];
-  const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token') || sessionStorage.getItem('token');
-  
+  const token =
+    localStorage.getItem("access_token") ||
+    localStorage.getItem("auth_token") ||
+    sessionStorage.getItem("token");
+
   // Debug token
   useEffect(() => {
-    console.log('Current token:', token);
-    console.log('localStorage access_token:', localStorage.getItem('access_token'));
-    console.log('localStorage auth_token:', localStorage.getItem('auth_token'));
-    console.log('sessionStorage token:', sessionStorage.getItem('token'));
+    console.log("Current token:", token);
+    console.log(
+      "localStorage access_token:",
+      localStorage.getItem("access_token")
+    );
+    console.log("localStorage auth_token:", localStorage.getItem("auth_token"));
+    console.log("sessionStorage token:", sessionStorage.getItem("token"));
   }, [token]);
 
   // Debug current question
   useEffect(() => {
-    console.log('Current question:', currentQuestion);
-    console.log('Current question index:', currentQuestionIndex);
+    console.log("Current question:", currentQuestion);
+    console.log("Current question index:", currentQuestionIndex);
   }, [currentQuestion, currentQuestionIndex]);
 
   // Helper to send answer to journey/save API
   const saveJourneyAnswer = async (questionIdx, answer, questionText) => {
     if (!token) {
-      console.error('No authentication token found');
-      toast.error('Authentication required. Please log in again.');
+      console.error("No authentication token found");
+      toast.error("Authentication required. Please log in again.");
       return;
     }
 
+    // Convert answer to "yes"/"no"
+    const answerText = answer === 1 ? "yes" : "no";
+
     try {
       const requestBody = {
-        question_key: `q${questionIdx - 1}`, // Convert to 0-indexed as backend expects q0 to q14
-        answer: answer.toString(), // Convert number to string as API expects "0" or "1"
-        question: questionText
+        question_key: `q${questionIdx - 1}`,
+        answer: answerText, // Use "yes" or "no"
+        question: questionText,
       };
-      
+
       // Additional validation - questionIdx is 1-indexed, we need 0-indexed
       const zeroBasedIndex = questionIdx - 1;
       if (zeroBasedIndex < 0 || zeroBasedIndex > 14) {
-        console.error('Invalid question index:', zeroBasedIndex, 'from questionIdx:', questionIdx);
-        throw new Error('Invalid question index');
+        console.error(
+          "Invalid question index:",
+          zeroBasedIndex,
+          "from questionIdx:",
+          questionIdx
+        );
+        throw new Error("Invalid question index");
       }
-      
+
       // Special debug for first question
       if (questionIdx === 1) {
-        console.log('First question debug:', {
+        console.log("First question debug:", {
           questionIdx,
           questionKey: `q${questionIdx - 1}`,
           answer: answer.toString(),
           questionText,
-          requestBody
+          requestBody,
         });
       }
-      
-      console.log('Sending journey save request:', requestBody);
-      
-      const res = await fetch('https://bichance-production-a30f.up.railway.app/api/v1/journey/save', {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(requestBody)
-      });
-      
+
+      console.log("Sending journey save request:", requestBody);
+
+      const res = await fetch(
+        "https://bichance-production-a30f.up.railway.app/api/v1/journey/save",
+        {
+          method: "POST",
+          headers: {
+            accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(requestBody),
+        }
+      );
+
       // Log the actual response for debugging
       const responseText = await res.text();
-      console.log('API Response:', res.status, responseText);
-      
+      console.log("API Response:", res.status, responseText);
+
       if (!res.ok) {
         let errorData = {};
         try {
@@ -1778,15 +2082,19 @@ function PersonalityQuestionsStep({ formData, updateFormData, onNext, onBack }) 
         } catch (e) {
           errorData = { detail: responseText };
         }
-        console.error('Journey save failed:', res.status, errorData);
-        console.error('Request that failed:', requestBody);
-        throw new Error(`Failed to save answer: ${res.status} ${errorData.detail || errorData.message || ''}`);
+        console.error("Journey save failed:", res.status, errorData);
+        console.error("Request that failed:", requestBody);
+        throw new Error(
+          `Failed to save answer: ${res.status} ${
+            errorData.detail || errorData.message || ""
+          }`
+        );
       }
-      
-      console.log('Journey answer saved successfully');
+
+      console.log("Journey answer saved successfully");
     } catch (err) {
-      console.error('Journey save error:', err);
-      toast.error('Failed to save answer: ' + err.message);
+      console.error("Journey save error:", err);
+      toast.error("Failed to save answer: " + err.message);
     }
   };
 
@@ -1794,17 +2102,21 @@ function PersonalityQuestionsStep({ formData, updateFormData, onNext, onBack }) 
     const newAnswers = { ...answers, [currentQuestion.id]: value };
     setAnswers(newAnswers);
     updateFormData({ personalityAnswers: newAnswers });
-    
+
     console.log(`Saving answer for question ${currentQuestionIndex + 1}:`, {
       questionId: currentQuestion.id,
       questionKey: `q${currentQuestion.id - 1}`, // Use question.id (1-indexed) to get correct 0-indexed key
       answer: value,
       question: currentQuestion.question,
-      isFirstQuestion: currentQuestionIndex === 0
+      isFirstQuestion: currentQuestionIndex === 0,
     });
-    
+
     // Save answer to API - use currentQuestion.id (1-indexed) instead of currentQuestionIndex (0-indexed)
-    await saveJourneyAnswer(currentQuestion.id, value, currentQuestion.question);
+    await saveJourneyAnswer(
+      currentQuestion.id,
+      value,
+      currentQuestion.question
+    );
     setTimeout(() => {
       if (isLastQuestion) {
         // Do nothing here, wait for button click
@@ -1830,51 +2142,67 @@ function PersonalityQuestionsStep({ formData, updateFormData, onNext, onBack }) 
 
   const handleSubmitJourney = async () => {
     if (!token) {
-      console.error('No authentication token found');
-      toast.error('Authentication required. Please log in again.');
+      console.error("No authentication token found");
+      toast.error("Authentication required. Please log in again.");
       return;
     }
 
     // Check if all questions are answered
     const answeredQuestions = Object.keys(answers).length;
     const totalQuestions = ONBOARDING_QUESTIONS.length;
-    
-    console.log('Answered questions:', answeredQuestions, 'Total questions:', totalQuestions);
-    console.log('Answers:', answers);
-    
+
+    console.log(
+      "Answered questions:",
+      answeredQuestions,
+      "Total questions:",
+      totalQuestions
+    );
+    console.log("Answers:", answers);
+
     if (answeredQuestions < totalQuestions) {
-      toast.error(`Please answer all ${totalQuestions} questions before submitting`);
+      toast.error(
+        `Please answer all ${totalQuestions} questions before submitting`
+      );
       return;
     }
 
     // Save last answer again in case user changed it but didn't click Yes/No after
-    await saveJourneyAnswer(currentQuestion.id, answers[currentQuestion.id], currentQuestion.question);
-    
+    await saveJourneyAnswer(
+      currentQuestion.id,
+      answers[currentQuestion.id],
+      currentQuestion.question
+    );
+
     // Call journey/submit API
     try {
-      const res = await fetch('https://bichance-production-a30f.up.railway.app/api/v1/journey/submit', {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: ''
-      });
-      
+      const res = await fetch(
+        "https://bichance-production-a30f.up.railway.app/api/v1/journey/submit",
+        {
+          method: "POST",
+          headers: {
+            accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: "",
+        }
+      );
+
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        console.error('Journey submit failed:', res.status, errorData);
-        toast.error('Failed to submit journey: ' + (errorData.detail || 'Unknown error'));
+        console.error("Journey submit failed:", res.status, errorData);
+        toast.error(
+          "Failed to submit journey: " + (errorData.detail || "Unknown error")
+        );
         return;
       }
-      
+
       const responseData = await res.json();
       if (responseData.data && responseData.data.scores) {
         const scores = responseData.data.scores;
         const compatibilityScore = calculateCompatibilityScore(scores);
-        updateFormData({ 
+        updateFormData({
           personalityScores: scores,
-          compatibilityScore: compatibilityScore
+          compatibilityScore: compatibilityScore,
         });
         // Instead of toast, pass score to onNext
         onNext(compatibilityScore);
@@ -1882,27 +2210,52 @@ function PersonalityQuestionsStep({ formData, updateFormData, onNext, onBack }) 
         onNext();
       }
     } catch (err) {
-      console.error('Journey submit error:', err);
-      toast.error('Failed to submit journey: ' + err.message);
+      console.error("Journey submit error:", err);
+      toast.error("Failed to submit journey: " + err.message);
     }
   };
 
   return (
-    <motion.div className="bg-white rounded-2xl shadow-lg px-12 py-16 max-w-2xl w-full flex flex-col items-center border border-black/20 min-h-[800px] mx-auto relative" style={{ backgroundColor: '#FFFFCC' }}>
-      <button onClick={handlePrevious} className="absolute left-4 top-4 text-black hover:text-gray-700 text-2xl font-bold focus:outline-none">←</button>
+    <motion.div
+      className="bg-white rounded-2xl shadow-lg px-12 py-16 max-w-2xl w-full flex flex-col items-center border border-black/20 min-h-[800px] mx-auto relative"
+      style={{ backgroundColor: "#FFFFCC" }}
+    >
+      <button
+        onClick={handlePrevious}
+        className="absolute left-4 top-4 text-black hover:text-gray-700 text-2xl font-bold focus:outline-none"
+      >
+        ←
+      </button>
       <div className="font-bold text-2xl md:text-3xl text-black text-center mb-2"></div>
-      <div className="italic text-lg md:text-xl font-serif text-center mb-4">PERSONALITY <span className="not-italic">QUESTIONS</span></div>
-      <div className="text-center text-gray-700 mb-6">Answer honestly to help us match you better</div>
+      <div className="italic text-lg md:text-xl font-serif text-center mb-4">
+        PERSONALITY <span className="not-italic">QUESTIONS</span>
+      </div>
+      <div className="text-center text-gray-700 mb-6">
+        Answer honestly to help us match you better
+      </div>
       <div className="w-full mb-6">
         <div className="bg-black/10 rounded-full h-2 overflow-hidden">
-          <div style={{ width: `${((currentQuestionIndex + 1) / ONBOARDING_QUESTIONS.length) * 100}%` }} className="h-full bg-black transition-all duration-300" />
+          <div
+            style={{
+              width: `${
+                ((currentQuestionIndex + 1) / ONBOARDING_QUESTIONS.length) * 100
+              }%`,
+            }}
+            className="h-full bg-black transition-all duration-300"
+          />
         </div>
         <div className="flex justify-between text-black text-xs mt-1">
           <span>Q {currentQuestionIndex + 1}</span>
           <span>{ONBOARDING_QUESTIONS.length} Questions</span>
         </div>
       </div>
-      <h2 className="font-bold text-2xl md:text-3xl text-black text-center mb-8 tracking-wide" style={{ fontFamily: 'AmstelvarAlpha, sans-serif', fontStyle: 'normal' }}>
+      <h2
+        className="font-bold text-2xl md:text-3xl text-black text-center mb-8 tracking-wide"
+        style={{
+          fontFamily: "AmstelvarAlpha, sans-serif",
+          fontStyle: "normal",
+        }}
+      >
         {currentQuestion.question}
       </h2>
       {isLastQuestion ? (
@@ -1911,14 +2264,22 @@ function PersonalityQuestionsStep({ formData, updateFormData, onNext, onBack }) 
             <button
               onClick={() => handleSelect(1)}
               className={`w-1/2 py-6 rounded-2xl border-2 text-xl font-bold shadow transition-all text-center
-                ${answers[currentQuestion.id] === 1 ? 'bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105' : 'bg-white border-gray-300 hover:border-red-400 hover:bg-red-50'}`}
+                ${
+                  answers[currentQuestion.id] === 1
+                    ? "bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105"
+                    : "bg-white border-gray-300 hover:border-red-400 hover:bg-red-50"
+                }`}
             >
               Yes
             </button>
             <button
               onClick={() => handleSelect(0)}
               className={`w-1/2 py-6 rounded-2xl border-2 text-xl font-bold shadow transition-all text-center
-                ${answers[currentQuestion.id] === 0 ? 'bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105' : 'bg-white border-gray-300 hover:border-red-400 hover:bg-red-50'}`}
+                ${
+                  answers[currentQuestion.id] === 0
+                    ? "bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105"
+                    : "bg-white border-gray-300 hover:border-red-400 hover:bg-red-50"
+                }`}
             >
               No
             </button>
@@ -1936,14 +2297,22 @@ function PersonalityQuestionsStep({ formData, updateFormData, onNext, onBack }) 
           <button
             onClick={() => handleSelect(1)}
             className={`w-1/2 py-6 rounded-2xl border-2 text-xl font-bold shadow transition-all text-center
-              ${answers[currentQuestion.id] === 1 ? 'bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105' : 'bg-white border-gray-300 hover:border-red-400 hover:bg-red-50'}`}
+              ${
+                answers[currentQuestion.id] === 1
+                  ? "bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105"
+                  : "bg-white border-gray-300 hover:border-red-400 hover:bg-red-50"
+              }`}
           >
             Yes
           </button>
           <button
             onClick={() => handleSelect(0)}
             className={`w-1/2 py-6 rounded-2xl border-2 text-xl font-bold shadow transition-all text-center
-              ${answers[currentQuestion.id] === 0 ? 'bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105' : 'bg-white border-gray-300 hover:border-red-400 hover:bg-red-50'}`}
+              ${
+                answers[currentQuestion.id] === 0
+                  ? "bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105"
+                  : "bg-white border-gray-300 hover:border-red-400 hover:bg-red-50"
+              }`}
           >
             No
           </button>
@@ -1957,35 +2326,41 @@ function PersonalityQuestionsStep({ formData, updateFormData, onNext, onBack }) 
 function IdentityQuestionsStep({ formData, updateFormData, onNext, onBack }) {
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState(formData.identityAnswers || {});
-  const [dobError, setDobError] = useState('');
+  const [dobError, setDobError] = useState("");
   const questions = IDENTITY_QUESTIONS;
   const isLast = current === questions.length - 1;
   const currentQ = questions[current];
 
   // Helper to call /api/v1/users/me after last question
   const fetchUserMe = async () => {
-    const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token') || sessionStorage.getItem('token');
+    const token =
+      localStorage.getItem("access_token") ||
+      localStorage.getItem("auth_token") ||
+      sessionStorage.getItem("token");
     if (!token) {
-      console.error('No authentication token found');
+      console.error("No authentication token found");
       return;
     }
     try {
-      const res = await fetch('https://bichance-production-a30f.up.railway.app/api/v1/users/me', {
-        method: 'GET',
-        headers: {
-          'accept': 'application/json',
-          'Authorization': `Bearer ${token}`
+      const res = await fetch(
+        "https://bichance-production-a30f.up.railway.app/api/v1/users/me",
+        {
+          method: "GET",
+          headers: {
+            accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         }
-      });
+      );
       if (res.ok) {
         const userData = await res.json();
-        console.log('Fetched user data after identity questions:', userData);
+        console.log("Fetched user data after identity questions:", userData);
       } else {
         const errorData = await res.json().catch(() => ({}));
-        console.error('Failed to fetch user data:', res.status, errorData);
+        console.error("Failed to fetch user data:", res.status, errorData);
       }
     } catch (err) {
-      console.error('Error fetching user data:', err);
+      console.error("Error fetching user data:", err);
     }
   };
 
@@ -2000,7 +2375,7 @@ function IdentityQuestionsStep({ formData, updateFormData, onNext, onBack }) {
         fetchUserMe();
         onNext();
       } else {
-        setDobError('');
+        setDobError("");
         setCurrent(current + 1);
       }
     }, 400);
@@ -2008,31 +2383,22 @@ function IdentityQuestionsStep({ formData, updateFormData, onNext, onBack }) {
 
   const handleDateChange = (e) => {
     const value = e.target.value;
-    if (isLast) {
-      const newAnswers = { ...answers, [currentQ.id]: value };
-      setAnswers(newAnswers);
-      updateFormData({ identityAnswers: newAnswers });
-      // Save to journey
-      saveJourneyField(currentQ.id, value, currentQ.question);
-      // Age validation
-      if (currentQ.id === 'dob') {
-        const today = new Date();
-        const dob = new Date(value);
-        const age = today.getFullYear() - dob.getFullYear();
-        const m = today.getMonth() - dob.getMonth();
-        const day = today.getDate() - dob.getDate();
-        let is18 = age > 18 || (age === 18 && (m > 0 || (m === 0 && day >= 0)));
-        if (!is18) {
-          setDobError('Your age should be at least 18 years');
-        } else {
-          setDobError('');
-        }
+    const newAnswers = { ...answers, [currentQ.id]: value };
+    setAnswers(newAnswers);
+    updateFormData({ identityAnswers: newAnswers });
+    // Age validation
+    if (currentQ.id === "dob") {
+      const today = new Date();
+      const dob = new Date(value);
+      const age = today.getFullYear() - dob.getFullYear();
+      const m = today.getMonth() - dob.getMonth();
+      const day = today.getDate() - dob.getDate();
+      let is18 = age > 18 || (age === 18 && (m > 0 || (m === 0 && day >= 0)));
+      if (!is18) {
+        setDobError("Your age should be at least 18 years");
+      } else {
+        setDobError("");
       }
-    } else {
-      setDobError('');
-      // Save to journey
-      saveJourneyField(currentQ.id, value, currentQ.question);
-      handleSelect(value);
     }
   };
 
@@ -2043,33 +2409,55 @@ function IdentityQuestionsStep({ formData, updateFormData, onNext, onBack }) {
       onBack();
     }
   };
-
+  const handleSubmitIdentity = async () => {
+    // Save all answers in one go
+    for (const q of questions) {
+      await saveJourneyField(q.id, answers[q.id], q.question);
+    }
+    await fetchUserMe();
+    onNext();
+  };
   // Step/progress bar for identity questions
   const progress = ((current + 1) / questions.length) * 100;
 
-  const isDobInvalid = currentQ.id === 'dob' && dobError;
+  const isDobInvalid = currentQ.id === "dob" && dobError;
   const isSubmitDisabled = !answers[currentQ.id] || isDobInvalid;
 
   return (
-    <motion.div className="bg-white rounded-2xl shadow-lg px-12 py-16 max-w-2xl w-full flex flex-col items-center border border-black/20 min-h-[800px] mx-auto relative" style={{ backgroundColor: '#FFFFCC' }}>
+    <motion.div
+      className="bg-white rounded-2xl shadow-lg px-12 py-16 max-w-2xl w-full flex flex-col items-center border border-black/20 min-h-[800px] mx-auto relative"
+      style={{ backgroundColor: "#FFFFCC" }}
+    >
       {/* Bold, attractive back arrow at top left */}
-      <button onClick={handlePrevious} className="absolute left-4 top-4 text-black text-3xl font-extrabold focus:outline-none z-20 hover:scale-110 transition-transform">←</button>
+      <button
+        onClick={handlePrevious}
+        className="absolute left-4 top-4 text-black text-3xl font-extrabold focus:outline-none z-20 hover:scale-110 transition-transform"
+      >
+        ←
+      </button>
       {/* Italic heading above progress bar */}
-      <div className="italic text-lg md:text-xl font-serif text-center mb-4 mt-2">IDENTITY <span className="not-italic">QUESTIONS</span></div>
+      <div className="italic text-lg md:text-xl font-serif text-center mb-4 mt-2">
+        IDENTITY <span className="not-italic">QUESTIONS</span>
+      </div>
       {/* Step bar */}
       <div className="w-full mb-6">
         <div className="bg-black/10 rounded-full h-2 overflow-hidden">
-          <div style={{ width: `${progress}%` }} className="h-full bg-black transition-all duration-300" />
+          <div
+            style={{ width: `${progress}%` }}
+            className="h-full bg-black transition-all duration-300"
+          />
         </div>
         <div className="flex justify-between text-black text-xs mt-1">
           <span>Q {current + 1}</span>
           <span>{questions.length} Steps</span>
         </div>
       </div>
-      <h2 className="text-lg sm:text-xl font-semibold text-black mb-6 mt-2 text-center w-full">{currentQ.question}</h2>
+      <h2 className="text-lg sm:text-xl font-semibold text-black mb-6 mt-2 text-center w-full">
+        {currentQ.question}
+      </h2>
       <div className="flex flex-col gap-4 w-full max-w-md mb-8">
         {currentQ.options ? (
-          currentQ.options.map(opt => (
+          currentQ.options.map((opt) => (
             <motion.button
               key={opt}
               onClick={() => {
@@ -2079,12 +2467,16 @@ function IdentityQuestionsStep({ formData, updateFormData, onNext, onBack }) {
                   setAnswers(newAnswers);
                   updateFormData({ identityAnswers: newAnswers });
                 } else {
-                  setDobError('');
+                  setDobError("");
                   handleSelect(opt);
                 }
               }}
-              className={`w-full py-8 rounded-xl border-2 text-xl font-semibold shadow transition-all text-center ${answers[currentQ.id] === opt ? 'bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105 font-extrabold' : 'border-gray-300 hover:border-red-400 hover:bg-red-50'}`}
-              style={{ transition: 'all 0.2s cubic-bezier(0.4,0,0.2,1)' }}
+              className={`w-full py-8 rounded-xl border-2 text-xl font-semibold shadow transition-all text-center ${
+                answers[currentQ.id] === opt
+                  ? "bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105 font-extrabold"
+                  : "border-gray-300 hover:border-red-400 hover:bg-red-50"
+              }`}
+              style={{ transition: "all 0.2s cubic-bezier(0.4,0,0.2,1)" }}
               whileHover={{ scale: 1.07 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -2098,19 +2490,21 @@ function IdentityQuestionsStep({ formData, updateFormData, onNext, onBack }) {
             <input
               type="date"
               className="w-full py-4 px-4 rounded-xl border-2 text-xl font-semibold shadow transition-all text-center border-gray-300 hover:border-red-400 focus:border-red-600 focus:outline-none"
-              value={answers[currentQ.id] || ''}
+              value={answers[currentQ.id] || ""}
               onChange={handleDateChange}
               placeholder="YYYY-MM-DD"
-              max={new Date().toISOString().split('T')[0]}
+              max={new Date().toISOString().split("T")[0]}
             />
             {isDobInvalid && (
-              <div className="text-red-600 text-center font-bold mt-2">{dobError}</div>
+              <div className="text-red-600 text-center font-bold mt-2">
+                {dobError}
+              </div>
             )}
           </>
         )}
         {isLast && (
           <button
-            onClick={() => onNext()}
+            onClick={handleSubmitIdentity}
             className="w-full max-w-xs mx-auto py-6 rounded-2xl border-2 text-xl font-bold shadow bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105 transition-all text-center mt-2"
             disabled={isSubmitDisabled}
           >
@@ -2124,7 +2518,8 @@ function IdentityQuestionsStep({ formData, updateFormData, onNext, onBack }) {
 
 // Add StrangerPossibilityResultStep (score/result container, orange background, no progress bar)
 function StrangerPossibilityResultStep({ formData, score, onNext, onBack }) {
-  const displayScore = typeof score === 'number' ? score : (formData.compatibilityScore ?? 0);
+  const displayScore =
+    typeof score === "number" ? score : formData.compatibilityScore ?? 0;
   const [animatedScore, setAnimatedScore] = React.useState(0);
 
   React.useEffect(() => {
@@ -2136,7 +2531,9 @@ function StrangerPossibilityResultStep({ formData, score, onNext, onBack }) {
     const increment = displayScore / totalFrames;
     const interval = setInterval(() => {
       frame++;
-      const next = Math.round(Math.min(displayScore, start + increment * frame));
+      const next = Math.round(
+        Math.min(displayScore, start + increment * frame)
+      );
       setAnimatedScore(next);
       if (next >= displayScore || frame >= totalFrames) {
         setAnimatedScore(displayScore);
@@ -2147,18 +2544,27 @@ function StrangerPossibilityResultStep({ formData, score, onNext, onBack }) {
   }, [displayScore]);
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center relative" style={{ background: '#FF5A36' }}>
+    <div
+      className="min-h-screen flex flex-col justify-center items-center relative"
+      style={{ background: "#FF5A36" }}
+    >
       {/* Back Arrow at top left of parent container */}
-      <button onClick={onBack} className="absolute left-6 top-6 text-white text-4xl font-extrabold focus:outline-none z-30 hover:scale-110 transition-transform">
+      <button
+        onClick={onBack}
+        className="absolute left-6 top-6 text-white text-4xl font-extrabold focus:outline-none z-30 hover:scale-110 transition-transform"
+      >
         ←
       </button>
       <div className="flex-1 flex flex-col justify-center items-center w-full">
         <div className="bg-[#FF5A36] rounded-2xl px-10 py-12 max-w-md w-full flex flex-col items-center relative">
           <div className="flex items-center justify-center mb-2 w-full mt-2">
-            <span className="text-6xl md:text-7xl font-extrabold text-white tracking-tight">{animatedScore}%</span>
+            <span className="text-6xl md:text-7xl font-extrabold text-white tracking-tight">
+              {animatedScore}%
+            </span>
           </div>
           <div className="text-center text-white text-lg font-bold mt-2">
-            The possibility (based on your personality) of meeting new strangers at our dinners
+            The possibility (based on your personality) of meeting new strangers
+            at our dinners
           </div>
         </div>
       </div>
@@ -2176,33 +2582,42 @@ function StrangerPossibilityResultStep({ formData, score, onNext, onBack }) {
 
 // Helper to save country, city, and identity fields via journey API
 const saveJourneyField = async (question_key, answer, questionText) => {
-  const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token') || sessionStorage.getItem('token');
+  const token =
+    localStorage.getItem("access_token") ||
+    localStorage.getItem("auth_token") ||
+    sessionStorage.getItem("token");
   if (!token) {
-    console.error('No authentication token found');
+    console.error("No authentication token found");
     return;
   }
   try {
     const requestBody = {
       question_key,
-      answer: answer?.toString?.() ?? '',
-      question: questionText
+      answer: answer?.toString?.() ?? "",
+      question: questionText,
     };
-    const res = await fetch('https://bichance-production-a30f.up.railway.app/api/v1/journey/save', {
-      method: 'POST',
-      headers: {
-        'accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(requestBody)
-    });
+    const res = await fetch(
+      "https://bichance-production-a30f.up.railway.app/api/v1/journey/save",
+      {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(requestBody),
+      }
+    );
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}));
-      console.error('Journey save failed:', res.status, errorData);
-      toast.error('Failed to save: ' + (errorData.detail || errorData.message || question_key));
+      console.error("Journey save failed:", res.status, errorData);
+      toast.error(
+        "Failed to save: " +
+          (errorData.detail || errorData.message || question_key)
+      );
     }
   } catch (err) {
-    console.error('Journey save error:', err);
-    toast.error('Failed to save: ' + question_key);
+    console.error("Journey save error:", err);
+    toast.error("Failed to save: " + question_key);
   }
 };

@@ -8,7 +8,7 @@ export const RedirectIfAuthenticated = ({ children }) => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
 
   if (loading) return <LoadingScreen />;
-  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+  if (isAuthenticated) return <Navigate to="/onboarding" replace />;
 
   return children;
 };

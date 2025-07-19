@@ -69,9 +69,23 @@ function App() {
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/contact-us" element={<ContactUsPage />} />
             <Route path="/terms" element={<TermsPage />} />
-            <Route path="/subscription/success" element={<SubscriptionSuccess />} />
-            <Route path="/subscription/cancel" element={<SubscriptionCancel />} />
-            <Route path="/signin" element={<SignInPage />} />
+            <Route
+              path="/subscription/success"
+              element={
+                <PrivateRoute>
+                  <SubscriptionSuccess />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/subscription/cancel"
+              element={
+                <PrivateRoute>
+                  <SubscriptionCancel />
+                </PrivateRoute>
+              }
+            />
+            {/* <Route path="/signin" element={<SignInPage />} /> */}
 
             {/* Auth Routes */}
             <Route
