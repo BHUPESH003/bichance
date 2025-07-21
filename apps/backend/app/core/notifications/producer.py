@@ -16,6 +16,7 @@ def queue_email_notification(to_email: str, template: str, data: dict):
     return sqs.send_message(
         QueueUrl=settings.SQS_QUEUE_URL,
         MessageBody=json.dumps({
+            "from": "Bichance <support@bichance.com>",
             "email": to_email,
             "template": template,
             "data": data
