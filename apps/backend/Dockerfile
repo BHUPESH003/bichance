@@ -8,15 +8,9 @@ ENV PYTHONUNBUFFERED=1
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    libssl-dev \
-    libffi-dev \
-    curl \
-    git \
-    rustc \
-    cargo \
+# Install system dependencies (for pydantic-core / orjson / cryptography etc.)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential curl git libssl-dev libffi-dev rustc cargo \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -25,15 +19,11 @@ COPY requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy your entire app
+# Copy your app code
 COPY . .
 
-# Copy and make start script executable
-COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh
-
-# Expose port FastAPI runs on
+# Expose port (Railway uses port 8000 by default)
 EXPOSE 8000
 
-# Run both the FastAPI server and the cron worker
-CMD ["./start.sh"]
+# Start the FastAPI app with Uvicorn
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

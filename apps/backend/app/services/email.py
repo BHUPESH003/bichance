@@ -72,27 +72,6 @@ def send_venue_update_email(to_email: str, name: str, venue_name: str, venue_add
         logger.error(f"❌ Failed to send venue update email to {to_email}: {e}")
         raise
 
-def send_email_raw(to_email: str, subject: str, body: str):
-    try:
-        message = MIMEMultipart()
-        message["Subject"] = subject
-        message["From"] = settings.EMAIL_SENDER
-        message["To"] = to_email
-        message.attach(MIMEText(body, "plain"))
-
-        with smtplib.SMTP(settings.SMTP_SERVER, int(settings.SMTP_PORT)) as server:
-            server.starttls()
-            server.login(settings.EMAIL_SENDER, settings.EMAIL_PASSWORD)
-            server.send_message(message)
-
-        logger.info(f"✅ Email sent to {to_email}")
-    except Exception as e:
-        logger.error(f"❌ Failed to send email to {to_email}: {e}")
-        raise
-
-
-
-
 
 def send_subscription_email(to_email: str, status: str):
     subject_map = {

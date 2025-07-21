@@ -8,7 +8,7 @@ from app.dependencies.auth import get_current_user
 from app.core.config import settings
 from datetime import datetime, timezone
 from pydantic import BaseModel
-from app.core.notifications.producer import queue_notification
+from app.core.notifications.producer import queue_email_notification
 from beanie import PydanticObjectId
 router = APIRouter(prefix="/subscription", tags=["Subscription"])
 
@@ -99,11 +99,13 @@ async def stripe_webhook(request: Request):
         )
         await new_sub.insert()
 
-        queue_notification({
-            "type": "SUBSCRIPTION_EMAIL",
-            "to_email": customer_email,
-            "status": "active"
-        })
+        queue_email_notification(
+            to_email=customer_email,
+            template="subscription",
+            data={
+                "status": "active"
+            }
+        )
 
 
     elif event['type'] == 'invoice.payment_failed':
@@ -118,11 +120,13 @@ async def stripe_webhook(request: Request):
                     user.subscription_status = "payment_failed"
                     await user.save()
 
-                queue_notification({
-                    "type": "SUBSCRIPTION_EMAIL",
-                    "to_email": subscription.user_email,
-                    "status": "failed"
-                })
+                    queue_email_notification(
+                        to_email=subscription.user_email,
+                        template="subscription",
+                        data={
+                            "status": "failed"
+                        }
+                    )
 
 
     elif event['type'] == 'customer.subscription.deleted':
@@ -139,11 +143,13 @@ async def stripe_webhook(request: Request):
                 user.subscription_end_date = subscription.end_date
                 await user.save()
 
-            queue_notification({
-                "type": "SUBSCRIPTION_EMAIL",
-                "to_email": subscription.user_email,
-                "status": "cancelled"
-            })
+            queue_email_notification(
+                to_email=subscription.user_email,
+                template="subscription",
+                data={
+                    "status": "cancelled"
+                }
+            )
 
     return {"status": "success"}
 

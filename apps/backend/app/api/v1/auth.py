@@ -9,7 +9,7 @@ from app.services.auth import logout_user
 from app.services.session import create_or_update_session
 from app.services.users import get_or_create_user
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from app.core.notifications.producer import queue_notification
+from app.core.notifications.producer import queue_email_notification
 
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -17,11 +17,13 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 async def send_otp(payload: OTPRequest):
     otp = generate_otp()
     await save_otp(payload.email, otp)
-    queue_notification({
-                    "type": "OTP_EMAIL",
-                    "to_email": payload.email,
-                    "otp": otp  
-                })
+    queue_email_notification(
+        to_email=payload.email,
+        template="otp_email",
+        data={
+            "otp": otp
+        }
+    )
     # send_otp_email(payload.email, otp)
     return SuccessResponse(
         message="OTP sent successfully",

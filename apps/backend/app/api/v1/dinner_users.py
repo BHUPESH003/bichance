@@ -12,7 +12,7 @@ from datetime import datetime, time, timezone, timedelta
 from pydantic import BaseModel
 from bson import ObjectId
 from app.utils.require_active_subscription import require_active_subscription
-from app.core.notifications.producer import queue_notification
+from app.core.notifications.producer import queue_email_notification
 from zoneinfo import ZoneInfo  # Python 3.9+
 
 class OptInResponse(BaseModel):
@@ -74,14 +74,16 @@ async def opt_in_to_dinner(
 
     ist_dt = utc_dt.astimezone(ZoneInfo("Asia/Kolkata"))
 
-    queue_notification({
-        "type": "DINNER_OPT_IN_EMAIL",
-        "to_email": user.email,
-        "name": user.name or "Guest",
-        "date": ist_dt.strftime("%Y-%m-%d"),
-        "time": ist_dt.strftime("%I:%M %p"),
-        "city": dinner.city,
-    })
+    queue_email_notification(
+        to_email=user.email,
+        template="dinner_opt_in",
+        data={
+            "name": user.name or "Guest",
+            "date": ist_dt.strftime("%Y-%m-%d"),
+            "time": ist_dt.strftime("%I:%M %p"),
+            "city": dinner.city
+        }
+    )
 
     return SuccessResponse(
         message="Opted-in successfully",

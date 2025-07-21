@@ -18,7 +18,7 @@ from beanie import PydanticObjectId
 import asyncio
 import pprint
 from app.core.logger import logger
-from app.core.notifications.producer import queue_notification
+from app.core.notifications.producer import queue_email_notification
 class AdminLoginRequest(BaseModel):
     email: EmailStr
     password: str
@@ -110,15 +110,17 @@ async def update_dinner_group_venue(
         user = await User.get(user_id)
         if not user:
             continue
-        queue_notification({
-        "type": "VENUE_UPDATE",
-        "to_email": user.email,
-        "name": user.name or "there",
-        "venue_name": venue.name,
-        "venue_address": venue.address,
-        "city": venue.city,
-        "date": group.date.strftime("%A, %d %B %Y") if hasattr(group, "date") else "your dinner date"
-    })
+        queue_email_notification(
+        to_email=user.email,
+        template="venue_update",
+        data={
+            "name": user.name or "there",
+            "venue_name": venue.name,
+            "venue_address": venue.address,
+            "city": venue.city,
+            "date": group.date.strftime("%A, %d %B %Y") if hasattr(group, "date") else "your dinner date"
+        }
+    )
 
     return SuccessResponse(message="Venue updated successfully and users notified", data=group)
 
@@ -176,16 +178,18 @@ async def run_matching(dinner_id: PydanticObjectId):
             )
             await dinner_group.insert()
 
-            # # Notify users
-            # for user in group:
-            #     queue_notification({
-            #     "type":"DINNER_UPDATE",
-            #     "to_email":user.email,
-            #     "name":user.name or "there",
-            #     "date":dinner.date.strftime("%A, %d %B %Y"),
-            #     "time":dinner.date.strftime("%I:%M %p"),
-            #     "city":dinner.city
-            #     })
+            # Notify users
+            for user in group:
+                queue_email_notification(
+                    to_email=user.email,
+                    template="dinner_update",
+                    data={
+                        "name": user.name or "there",
+                        "date": dinner.date.strftime("%A, %d %B %Y"),
+                        "time": dinner.date.strftime("%I:%M %p"),
+                        "city": dinner.city
+                    }
+                )
                 
 
 
