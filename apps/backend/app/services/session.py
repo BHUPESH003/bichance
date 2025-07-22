@@ -15,7 +15,15 @@ async def create_or_update_session(
     access_token, refresh_token = create_tokens(email)
 
     user_agent = request.headers.get("user-agent") if request else None
-    ip_address = request.client.host if request and request.client else None
+    ip_address = None
+    if request:
+        # Check for standard headers used by reverse proxies.
+        # 'X-Forwarded-For' is the most common one.
+        # It can be a comma-separated list, the client's IP is the first one.
+        if forwarded_for := request.headers.get("x-forwarded-for"):
+            ip_address = forwarded_for.split(",")[0].strip()
+        elif request.client:
+            ip_address = request.client.host
 
     if existing_session:
         existing_session.access_token = access_token
