@@ -1,6 +1,7 @@
 import { useState, useEffect, createContext, useContext } from 'react'
 import { auth, db } from '../lib/supabase'
 import toast from 'react-hot-toast'
+import { fetchWithAuth } from '../lib/fetchWithAuth';
 
 const AuthContext = createContext({})
 
@@ -45,13 +46,7 @@ export const AuthProvider = ({ children }) => {
   // Fetch current user from /api/v1/users/me
   const fetchCurrentUser = async (token) => {
     try {
-      const res = await fetch('https://bichance-production-a30f.up.railway.app/api/v1/users/me', {
-        method: 'GET',
-        headers: {
-          'accept': 'application/json',
-          'Authorization': `Bearer ${token || localStorage.getItem('access_token')}`,
-        },
-      });
+      const res = await fetchWithAuth('https://bichance-production-a30f.up.railway.app/api/v1/users/me');
       if (res.ok) {
         const data = await res.json();
         setUser(data);
@@ -159,14 +154,7 @@ export const AuthProvider = ({ children }) => {
     try {
       // Call backend logout API
       const accessToken = localStorage.getItem('access_token');
-      await fetch('https://bichance-production-a30f.up.railway.app/api/v1/auth/logout', {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-        },
-        body: ''
-      });
+      await fetchWithAuth('https://bichance-production-a30f.up.railway.app/api/v1/auth/logout', { method: 'POST', body: '' });
       setUser(null);
       setProfile(null);
       setSession(null);

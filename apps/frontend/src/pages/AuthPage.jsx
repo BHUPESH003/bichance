@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
 import { login as reduxLogin } from "../store/authSlice";
+import { fetchWithAuth } from '../lib/fetchWithAuth';
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "";
 
@@ -44,7 +45,7 @@ const AuthPage = () => {
 
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/auth/send-otp`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/v1/auth/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -82,7 +83,7 @@ const AuthPage = () => {
     }
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/auth/verify-otp`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/v1/auth/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp }),
@@ -122,17 +123,20 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-red-50 to-white px-2 sm:px-4 w-full">
+    <div className="min-h-screen flex flex-col items-center justify-center px-2 sm:px-4 w-full bg-[#FEF7ED]" style={{ backgroundImage: 'url(/auth.avif)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
       <motion.div
-        className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 w-full max-w-md"
+        className="bg-white/30 backdrop-blur-lg rounded-2xl shadow-none p-6 sm:p-8 w-full max-w-md"
         initial={{ y: 40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
       >
+        <div className="flex justify-center mb-4">
+          <img src="/l1.png" alt="Logo" className="h-24 w-auto" />
+        </div>
         <h2 className="text-3xl font-bold text-center text-red-600 mb-6">
           Sign Up with Email
         </h2>
         {step === 1 && (
-          <form onSubmit={handleSendOtp} className="flex flex-col gap-4">
+          <form onSubmit={e => e.preventDefault()} className="flex flex-col gap-4">
             <label className="font-semibold text-gray-700">Email Address</label>
             <input
               type="email"
@@ -143,21 +147,14 @@ const AuthPage = () => {
               required
               disabled={countdown > 0}
             />
-            <button
-              type="submit"
-              className={`font-bold py-3 rounded-lg transition-all text-lg mt-2 ${
-                countdown > 0
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-red-600 hover:bg-red-700 text-white"
-              }`}
-              disabled={loading || countdown > 0}
-            >
-              {loading
-                ? "Sending OTP..."
-                : countdown > 0
-                ? `Wait ${countdown}s`
-                : "Send OTP"}
-            </button>
+            {/* Slide to Send OTP Button */}
+            <SlideToSendOTP
+              onSlide={handleSendOtp}
+              loading={loading}
+              disabled={countdown > 0 || !email || !email.includes("@")}
+              countdown={countdown}
+              label="Send OTP"
+            />
             {error && (
               <div className="text-red-600 text-center font-semibold">
                 {error}
@@ -181,13 +178,13 @@ const AuthPage = () => {
               placeholder="Enter OTP"
               required
             />
-            <button
-              type="submit"
-              className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition-all text-lg mt-2"
-              disabled={loading}
-            >
-              {loading ? "Verifying..." : "Verify OTP"}
-            </button>
+            <SlideToSendOTP
+              onSlide={handleVerifyOtp}
+              loading={loading}
+              disabled={loading || !otp || otp.length < 4}
+              countdown={0}
+              label="Verify OTP"
+            />
             {error && (
               <div className="text-red-600 text-center font-semibold">
                 {error}
@@ -208,8 +205,100 @@ const AuthPage = () => {
           </form>
         )}
       </motion.div>
+      <button
+        className="mt-6 w-full max-w-[140px] mx-auto py-3 rounded-full text-white font-bold text-lg shadow-lg transition-all bg-gradient-to-r from-red-500 to-red-700 hover:bg-black hover:from-black hover:to-black hover:text-white"
+        style={{
+          border: 'none',
+          borderRadius: '9999px',
+        }}
+        onClick={() => navigate('/')}
+      >
+        Go to Home
+      </button>
     </div>
   );
 };
 
 export default AuthPage;
+
+function SlideToSendOTP({ onSlide, loading, disabled, countdown, label }) {
+  const [slide, setSlide] = useState(0);
+  const [sliding, setSliding] = useState(false);
+  const sliderRef = useRef(null);
+
+  // Reset slide on loading or countdown
+  useEffect(() => {
+    if (!loading && countdown === 0) setSlide(0);
+  }, [loading, countdown]);
+
+  const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
+
+  const handleMouseDown = (e) => {
+    if (disabled) return;
+    if (isDesktop) {
+      // Instantly animate to 100% and trigger on desktop
+      setSlide(100);
+      setTimeout(() => {
+        onSlide({ preventDefault: () => {} });
+        setSlide(0);
+      }, 250);
+    } else {
+      setSliding(true);
+    }
+  };
+  const handleMouseUp = (e) => {
+    if (!sliding) return;
+    setSliding(false);
+    if (slide > 80) {
+      onSlide({ preventDefault: () => {} });
+    } else {
+      setSlide(0);
+    }
+  };
+  const handleMouseMove = (e) => {
+    if (!sliding) return;
+    const rect = sliderRef.current.getBoundingClientRect();
+    let x = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+    let percent = ((x - rect.left) / rect.width) * 100;
+    percent = Math.max(0, Math.min(100, percent));
+    setSlide(percent);
+  };
+  return (
+    <div
+      ref={sliderRef}
+      className={`relative w-full h-12 bg-black rounded-full overflow-hidden select-none mt-2 shadow-lg ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => setSliding(false)}
+      onTouchStart={handleMouseDown}
+      onTouchEnd={handleMouseUp}
+      onTouchMove={handleMouseMove}
+      style={{ userSelect: 'none' }}
+    >
+      <div
+        className="absolute top-0 left-0 h-full bg-gradient-to-r from-red-500 to-red-700 transition-all duration-200"
+        style={{ width: `${slide}%` }}
+      />
+      <div
+        className="absolute top-0 left-0 h-full flex items-center justify-center w-full z-10 pointer-events-none"
+      >
+        {loading ? (
+          <span className="text-white font-bold">{label === 'Verify OTP' ? 'Verifying...' : 'Sending OTP...'}</span>
+        ) : countdown > 0 ? (
+          <span className="text-white font-bold">Wait {countdown}s</span>
+        ) : slide > 80 ? (
+          <span className="text-white font-bold">Release to {label}</span>
+        ) : (
+          <span className="text-white font-bold tracking-wider">SWIPE TO {label.toUpperCase()}</span>
+        )}
+      </div>
+      <div
+        className="absolute top-1 left-1 h-10 w-10 bg-gradient-to-r from-red-500 to-red-700 rounded-full shadow flex items-center justify-center z-20 transition-transform duration-200"
+        style={{ transform: `translateX(${slide * (sliderRef.current ? sliderRef.current.offsetWidth - 48 : 0) / 100}px)` }}
+      >
+        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+      </div>
+    </div>
+  );
+}

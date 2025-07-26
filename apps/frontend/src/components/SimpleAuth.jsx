@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useDispatch } from 'react-redux';
 import { login as reduxLogin } from '../store/authSlice';
+import { fetchWithAuth } from '../lib/fetchWithAuth';
 
 const API_BASE_URL = (import.meta.env.VITE_BACKEND_URL || 'https://bichance-production-a30f.up.railway.app') + '/api/v1';
 
@@ -46,7 +47,7 @@ export function SimpleAuth({ onAuthSuccess }) {
         ? { identifier: formData.email || formData.phone, password: formData.password }
         : formData;
 
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -79,7 +80,7 @@ export function SimpleAuth({ onAuthSuccess }) {
     e.preventDefault();
     setOtpLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/send-otp`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}/auth/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
@@ -102,7 +103,7 @@ export function SimpleAuth({ onAuthSuccess }) {
     e.preventDefault();
     setOtpLoading(true);
     try {
-      const res = await fetch('https://bichance-production-a30f.up.railway.app/api/v1/auth/verify-otp', {
+      const res = await fetchWithAuth('https://bichance-production-a30f.up.railway.app/api/v1/auth/verify-otp', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

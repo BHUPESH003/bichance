@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { useAuth } from "./hooks/useAuth";
@@ -13,6 +13,7 @@ import AdminPanel from "./components/AdminPanel";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { login } from "./store/authSlice";
+import { fetchWithAuth } from './lib/fetchWithAuth';
 
 // API Configuration
 const API_BASE_URL =
@@ -617,7 +618,7 @@ export function ExclusiveOnboarding({ onComplete }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-red-700 via-red-500 to-red-600">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-black">
       {/* Progress Bar */}
       <div className="absolute top-8 left-1/2 transform -translate-x-1/2 w-full max-w-md px-4">
         <div className="bg-black/10 rounded-full h-2 overflow-hidden backdrop-blur-sm">
@@ -662,7 +663,7 @@ function MemberCheckStep({ formData, updateFormData, onNext }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       className="bg-white/95 backdrop-blur-lg rounded-3xl p-8 w-full max-w-2xl relative z-10 border border-white/30 min-h-[750px]"
-      style={{ backgroundColor: "#FFFFCC" }}
+      style={{ backgroundColor: "#FEF7ED" }}
     >
       <div className="text-center mb-8">
         <motion.div
@@ -798,7 +799,7 @@ function PhoneVerificationStep({ formData, updateFormData, onNext, onBack }) {
         answer: fullNumber,
         question: "Your mobile number",
       };
-      const res = await fetch(
+      const res = await fetchWithAuth(
         "https://bichance-production-a30f.up.railway.app/api/v1/journey/save",
         {
           method: "POST",
@@ -846,124 +847,113 @@ function PhoneVerificationStep({ formData, updateFormData, onNext, onBack }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="backdrop-blur-lg rounded-3xl p-8 w-full max-w-2xl min-h-[750px] mx-auto relative z-10 border border-white/20 shadow-xl"
-      style={{ backgroundColor: "#FFFFCC" }}
+      className="fixed inset-0 z-50 flex flex-col w-screen h-screen min-h-screen bg-[#FEF7ED] p-0 border-0 border-black/20 overflow-y-auto"
+      style={{ borderRadius: 0, backgroundImage: 'url(/pv.webp)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}
     >
-      <div className="text-center mb-8">
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-          className="text-6xl mb-4"
-        >
-          📱
-        </motion.div>
-        <h2 className="text-3xl font-bold text-black mb-2">
-          Your Phone Number
-        </h2>
-        <div className="italic text-lg md:text-xl font-serif text-center mb-4">
-          PHONE <span className="not-italic">VERIFICATION</span>
-        </div>
-        <p className="text-neutral-900">
-          {formData.isExistingMember
-            ? "We'll check if you're already in our system"
-            : "We'll verify you're a new member"}
-        </p>
-      </div>
-
-      <div className="mb-8">
-        <label className="block text-black font-medium mb-4">
-          Phone Number
-        </label>
-
-        <div className="flex flex-col sm:flex-row sm:space-x-3 mb-4 w-full">
-          <select
-            value={countryCode}
-            onChange={(e) => setCountryCode(e.target.value)}
-            className="bg-white/10 border border-white/30 rounded-xl px-4 py-3 text-black focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm w-full sm:w-1/3 mb-2 sm:mb-0"
+      <div className="bg-white/30 backdrop-blur-lg rounded-2xl p-6 sm:p-8 max-w-md w-full mx-auto mt-8">
+        <div className="text-center mb-8">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            className="text-6xl mb-4 md:mt-12"
           >
-            {Object.entries(COUNTRY_CODES).map(([country, code]) => (
-              <option
-                key={country}
-                value={code}
-                className="bg-gray-800 text-black"
-              >
-                {code} ({country})
-              </option>
-            ))}
-          </select>
-          <input
-            type="tel"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ""))}
-            placeholder="87654321"
-            className="flex-1 bg-white/10 border border-white/30 rounded-xl px-4 py-3 text-black placeholder-black/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm w-full"
-          />
-        </div>
-
-        <div className="p-3 bg-blue-500/20 border border-blue-400/30 rounded-lg mb-4">
-          <p className="text-blue-900 text-sm">
-            📱 Full number:{" "}
-            <strong>
-              {countryCode}
-              {phoneNumber}
-            </strong>
+            📱
+          </motion.div>
+          <h2 className="text-3xl font-bold text-black mb-2">
+            Your Phone Number
+          </h2>
+          <div className="italic text-lg md:text-xl font-serif text-center mb-4">
+            PHONE <span className="not-italic">VERIFICATION</span>
+          </div>
+          <p className="text-neutral-900">
+            {formData.isExistingMember
+              ? "We'll check if you're already in our system"
+              : "We'll verify you're a new member"}
           </p>
         </div>
 
-        {userExists !== null && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`p-4 rounded-lg border ${
-              userExists
-                ? "bg-green-500/20 border-green-400/30"
-                : "bg-blue-500/20 border-blue-400/30"
-            }`}
-          >
-            <p
-              className={`text-sm font-medium ${
-                userExists ? "text-green-900" : "text-blue-900"
+        <div className="mb-8 w-full max-w-md mx-auto text-center md:mt-10">
+          <label className="block text-black font-medium mb-4">
+            Phone Number
+          </label>
+
+          <div className="flex flex-row space-x-3 mb-4 w-full justify-center items-center">
+            <select
+              value={countryCode}
+              onChange={(e) => setCountryCode(e.target.value)}
+              className="bg-white/10 border border-white/30 rounded-xl px-4 py-3 text-black focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm w-1/3"
+            >
+              {Object.entries(COUNTRY_CODES).map(([country, code]) => (
+                <option
+                  key={country}
+                  value={code}
+                  className="bg-gray-800 text-black"
+                >
+                  {code} ({country})
+                </option>
+              ))}
+            </select>
+            <input
+              type="tel"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ""))}
+              placeholder="87654321"
+              className="bg-white/10 border border-white/30 rounded-xl px-4 py-3 text-black placeholder-black/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm w-1/2"
+            />
+          </div>
+
+          <div className="p-3 bg-blue-500/20 border border-blue-400/30 rounded-lg mb-4 w-55">
+            <p className="text-blue-900 text-sm">
+              📱 Full number:{" "}
+              <strong>
+                {countryCode}
+                {phoneNumber}
+              </strong>
+            </p>
+          </div>
+
+          {userExists !== null && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`p-4 rounded-lg border ${
+                userExists
+                  ? "bg-green-500/20 border-green-400/30"
+                  : "bg-blue-500/20 border-blue-400/30"
               }`}
             >
-              {userExists
-                ? `✅ Account found! Status: ${userStatus}`
-                : "✨ New member - welcome to bichance!"}
-            </p>
-          </motion.div>
-        )}
-      </div>
-
-      <div className="flex space-x-4">
-        <motion.button
-          onClick={onBack}
-          className="px-6 py-3 text-neutral-900 hover:text-black border border-white/30 rounded-xl transition-colors"
-          whileHover={{ x: -5 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          ← Back
-        </motion.button>
-
-        <motion.button
-          onClick={checkPhoneNumber}
-          disabled={phoneNumber.length < 8 || checking}
-          className="flex-1 bg-gradient-to-r from-red-500 to-red-700 text-white py-4 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
-          whileHover={{ scale: 1.02, y: -2 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          {checking ? (
-            <div className="flex items-center justify-center">
-              <motion.div
-                className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full mr-3"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              />
-              Checking...
-            </div>
-          ) : (
-            "Verify Number →"
+              <p
+                className={`text-sm font-medium ${
+                  userExists ? "text-green-900" : "text-blue-900"
+                }`}
+              >
+                {userExists
+                  ? `✅ Account found! Status: ${userStatus}`
+                  : "✨ New member - welcome to bichance!"}
+              </p>
+            </motion.div>
           )}
-        </motion.button>
+        </div>
+
+        <div className="w-full flex flex-col items-center gap-2 mt-4 px-2 sm:px-0">
+          <div className="w-full max-w-[260px] sm:max-w-md mx-auto">
+            <SlideToSendOTP
+              onSlide={checkPhoneNumber}
+              loading={checking}
+              disabled={phoneNumber.length < 8 || checking}
+              countdown={0}
+              label="Verify Number"
+            />
+          </div>
+          <button
+            onClick={() => window.location.href = '/'}
+            className="mx-auto mt-3 flex items-center justify-center w-28 h-12 rounded-full bg-gradient-to-r from-red-500 to-red-700 text-white shadow hover:from-red-600 hover:to-red-800 transition-colors text-xs font-semibold"
+            aria-label="Go to Home"
+          >
+            Go to Home
+          </button>
+        </div>
       </div>
     </motion.div>
   );
@@ -1016,21 +1006,23 @@ function CountrySelectionStep({ formData, updateFormData, onNext, onBack }) {
 
   return (
     <motion.div
-      className="bg-white rounded-2xl shadow-lg px-12 py-16 max-w-2xl w-full flex flex-col items-center border border-black/20 min-h-[800px] mx-auto relative"
-      style={{ backgroundColor: "#FFFFCC" }}
+      className="fixed inset-0 z-50 flex flex-col w-screen h-screen min-h-screen bg-[#FEF7ED] shadow-none p-0 border-0 border-black/20 overflow-y-auto"
+      style={{ borderRadius: 0 }}
     >
+      {/* Back Arrow */}
       <button
         onClick={onBack}
-        className="absolute left-4 top-4 text-black hover:text-gray-700 text-2xl font-bold focus:outline-none"
+        className="absolute left-6 top-4 text-black hover:text-gray-700 text-2xl font-bold focus:outline-none"
+        aria-label="Back"
       >
-        ←
+        <span className="fi fi-rs-arrow-alt-circle-left"></span>
       </button>
-      <div className="not-italic font-bold text-2xl md:text-3xl text-black text-center mb-2">
+      <div className="not-italic font-bold text-2xl md:text-3xl text-black text-center mb-2 mt-8">
         Location
       </div>
       <div className="italic text-lg md:text-xl font-serif text-center mb-4">
-        WHERE WOULD YOU LIKE TO HAVE{" "}
-        <span className="not-italic">YOUR DINNERS?</span>
+        WHERE WOULD YOU LIKE TO<br />
+        <span className="not-italic">HAVE <span className="bg-gradient-to-r from-red-500 to-red-700 bg-clip-text text-transparent font-bold">YOUR DINNERS</span>?</span>
       </div>
       <div className="text-center text-gray-700 mb-6">
         You can change it later
@@ -1040,30 +1032,27 @@ function CountrySelectionStep({ formData, updateFormData, onNext, onBack }) {
       ) : error ? (
         <div className="text-center text-red-500">{error}</div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full">
-          {availableCountries.map((country) => (
-            <button
-              key={country}
-              onClick={() => handleCountrySelect(country)}
-              className={`rounded-xl p-5 border-2 flex flex-col items-center justify-center shadow-md text-center transition-all
-                ${
-                  selectedCountry === country
-                    ? "bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105 font-extrabold"
-                    : "bg-white border-gray-300 hover:border-red-400 hover:bg-gray-50 font-semibold"
-                }
-              `}
-              style={{ transition: "all 0.2s" }}
-            >
-              <span>{country}</span>
-            </button>
-          ))}
+        <div className="w-full flex md:justify-end md:items-start">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 w-full max-w-xl justify-center mx-auto">
+            {availableCountries.map((country) => (
+              <button
+                key={country}
+                onClick={() => handleCountrySelect(country)}
+                className={`rounded-xl p-2 max-w-[150px] w-full h-16 border-2 flex flex-col items-center justify-center shadow-md text-center transition-all
+                  ${
+                    selectedCountry === country
+                      ? "bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105 font-extrabold"
+                      : "bg-white border-gray-300 hover:border-red-400 hover:bg-gray-50 font-semibold"
+                  }
+                `}
+                style={{ transition: "all 0.2s" }}
+              >
+                <span className="w-full flex items-center justify-center text-center whitespace-normal break-words overflow-hidden max-h-full px-1">{country}</span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
-      <div className="flex justify-between w-full mt-8">
-        <button onClick={onBack} className="btn btn-ghost">
-          Back
-        </button>
-      </div>
     </motion.div>
   );
 }
@@ -1128,14 +1117,15 @@ function CityLocalitySelectionStep({
 
   return (
     <motion.div
-      className="bg-white rounded-2xl shadow-lg px-12 py-16 max-w-2xl w-full flex flex-col items-center border border-black/20 min-h-[800px] mx-auto relative"
-      style={{ backgroundColor: "#FFFFCC" }}
+      className="fixed inset-0 z-50 flex flex-col w-screen h-screen min-h-screen bg-[#FEF7ED] shadow-none p-0 border-0 border-black/20 overflow-y-auto"
+      style={{ borderRadius: 0 }}
     >
       <button
         onClick={onBack}
         className="absolute left-4 top-4 text-black hover:text-gray-700 text-2xl font-bold focus:outline-none"
+        aria-label="Back"
       >
-        ←
+        <span className="fi fi-rs-arrow-alt-circle-left"></span>
       </button>
       <div className="font-bold text-2xl md:text-3xl text-black text-center mb-2">
         Location
@@ -1151,34 +1141,31 @@ function CityLocalitySelectionStep({
       ) : error ? (
         <div className="text-center text-red-500">{error}</div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full">
-          {availableCities.map((city) => (
-            <motion.button
-              key={city.name}
-              onClick={() => handleCitySelect(city.name)}
-              className={`rounded-xl p-7 border-2 flex flex-col items-center justify-center shadow-md text-center transition-all
-                ${
-                  selectedCity === city.name
-                    ? "bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105 font-extrabold"
-                    : "bg-white border-gray-300 hover:border-red-400 hover:bg-gray-50 font-semibold"
-                }
-              `}
-              style={{ transition: "all 0.2s cubic-bezier(0.4,0,0.2,1)" }}
-              whileHover={{ scale: 1.07 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <span className="text-lg md:text-xl font-bold tracking-wide">
-                {city.name}
-              </span>
-            </motion.button>
-          ))}
+        <div className="w-full flex md:justify-end md:items-start">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 w-full max-w-xl justify-center mx-auto">
+            {availableCities.map((city) => (
+              <motion.button
+                key={city.name}
+                onClick={() => handleCitySelect(city.name)}
+                className={`rounded-xl p-2 max-w-[150px] w-full h-16 border-2 flex flex-col items-center justify-center shadow-md text-center transition-all
+                  ${
+                    selectedCity === city.name
+                      ? "bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105 font-extrabold"
+                      : "bg-white border-gray-300 hover:border-red-400 hover:bg-gray-50 font-semibold"
+                  }
+                `}
+                style={{ transition: "all 0.2s cubic-bezier(0.4,0,0.2,1)" }}
+                whileHover={{ scale: 1.07 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <span className="w-full flex items-center justify-center text-center whitespace-normal break-words overflow-hidden max-h-full px-1">
+                  {city.name}
+                </span>
+              </motion.button>
+            ))}
+          </div>
         </div>
       )}
-      <div className="flex justify-between w-full mt-8">
-        <button onClick={onBack} className="btn btn-ghost">
-          Back
-        </button>
-      </div>
     </motion.div>
   );
 }
@@ -1210,7 +1197,7 @@ function UserDetailsStep({ formData, updateFormData, onNext, onBack }) {
             answer: `${details.firstName} ${details.lastName}`.trim(),
             question: "Your full name",
           };
-          await fetch(
+          await fetchWithAuth(
             "https://bichance-production-a30f.up.railway.app/api/v1/journey/save",
             {
               method: "POST",
@@ -1237,15 +1224,16 @@ function UserDetailsStep({ formData, updateFormData, onNext, onBack }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="bg-white rounded-2xl shadow-lg px-12 py-16 w-full max-w-2xl flex flex-col items-center justify-center min-h-[800px] mx-auto relative"
-      style={{ backgroundColor: "#FFFFCC" }}
+      className="fixed inset-0 z-50 flex flex-col w-screen h-screen min-h-screen bg-[#FEF7ED] shadow-none p-0 border-0 border-black/20 overflow-y-auto"
+      style={{ borderRadius: 0 }}
     >
       {/* Back Arrow */}
       <button
         onClick={onBack}
         className="absolute left-6 top-6 text-black hover:text-gray-700 text-2xl font-bold focus:outline-none"
+        aria-label="Back"
       >
-        ←
+        <span className="fi fi-rs-arrow-alt-circle-left"></span>
       </button>
       <div className="text-center mb-8">
         <motion.div
@@ -1263,48 +1251,38 @@ function UserDetailsStep({ formData, updateFormData, onNext, onBack }) {
         <p className="text-neutral-900">Just a few final details</p>
       </div>
 
-      <div className="space-y-6 mb-8">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-black font-medium mb-2">
+      <div className="space-y-6 mb-8 flex flex-col items-center">
+        <div className="flex flex-row gap-4 w-full justify-center">
+          <div className="w-full max-w-xs" style={{ maxWidth: '140px' }}>
+            <label className="block text-black font-medium mb-2 text-center">
               First Name *
             </label>
             <input
               type="text"
               value={details.firstName}
               onChange={(e) => handleDetailsChange("firstName", e.target.value)}
-              className="w-full bg-white/10 border border-white/30 rounded-xl px-4 py-3 text-black placeholder-black/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm"
+              className="w-full bg-white/10 border-2 border-gray-400 rounded-xl px-3 py-2 text-black placeholder-black/50 focus:ring-2 focus:ring-purple-500 focus:border-gray-600 backdrop-blur-sm mx-auto"
             />
           </div>
-
-          <div>
-            <label className="block text-black font-medium mb-2">
+          <div className="w-full max-w-xs" style={{ maxWidth: '140px' }}>
+            <label className="block text-black font-medium mb-2 text-center">
               Last Name *
             </label>
             <input
               type="text"
               value={details.lastName}
               onChange={(e) => handleDetailsChange("lastName", e.target.value)}
-              className="w-full bg-white/10 border border-white/30 rounded-xl px-4 py-3 text-black placeholder-black/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm"
+              className="w-full bg-white/10 border-2 border-gray-400 rounded-xl px-3 py-2 text-black placeholder-black/50 focus:ring-2 focus:ring-purple-500 focus:border-gray-600 backdrop-blur-sm mx-auto"
             />
           </div>
         </div>
       </div>
 
-      <div className="flex space-x-4">
-        <motion.button
-          onClick={onBack}
-          className="px-6 py-3 text-neutral-900 hover:text-black border border-white/30 rounded-xl transition-colors"
-          whileHover={{ x: -5 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          ← Back
-        </motion.button>
-
+      <div className="flex flex-col items-center gap-3">
         <motion.button
           onClick={handleContinue}
           disabled={!details.firstName || !details.lastName}
-          className="flex-1 bg-gradient-to-r from-red-500 to-red-700 text-white py-4 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+          className="w-40 mx-auto bg-gradient-to-r from-red-500 to-red-700 hover:from-black hover:to-gray-800 text-white py-3 px-4 rounded-full font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 text-center text-base"
           whileHover={{ scale: 1.02, y: -2 }}
           whileTap={{ scale: 0.98 }}
         >
@@ -1400,8 +1378,8 @@ const AccountCreationStep = ({ formData, updateFormData, onNext, onBack }) => {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -50 }}
       transition={{ duration: 0.5 }}
-      className="bg-white/95 backdrop-blur-lg rounded-3xl p-8 w-full max-w-2xl relative z-10 border border-white/30 text-center"
-      style={{ backgroundColor: "#FFFFCC" }}
+      className="bg-[#FEF7ED] sm:bg-white/95 backdrop-blur-lg p-0 sm:p-8 w-full sm:max-w-2xl relative z-10 border-0 sm:border border-white/30 text-center"
+      style={{ borderRadius: 0 }}
     >
       <div className="mb-8">
         <h2 className="text-3xl font-bold text-black mb-2">
@@ -1490,7 +1468,7 @@ const AccountCreationStep = ({ formData, updateFormData, onNext, onBack }) => {
         </motion.button>
         <motion.button
           onClick={handleContinue}
-          className="flex-1 py-3 px-6 rounded-lg bg-gradient-to-r from-red-500 to-red-700 text-white font-semibold hover:from-red-600 hover:to-red-800 transition-colors"
+          className="flex-1 py-3 px-6 rounded-lg bg-gradient-to-r from-red-500 to-red-700 hover:from-black hover:to-gray-800 text-white font-semibold hover:from-red-600 hover:to-red-800 transition-colors"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
@@ -1505,41 +1483,43 @@ const AccountCreationStep = ({ formData, updateFormData, onNext, onBack }) => {
 const CompletionStep = ({ formData, onNext, onBack }) => {
   const navigate = useNavigate();
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="bg-white/95 backdrop-blur-lg rounded-3xl p-8 w-full max-w-2xl relative z-10 border border-white/30"
-      style={{ backgroundColor: "#FFFFCC" }}
-    >
+    <div className="fixed inset-0 w-screen h-screen min-h-screen flex items-center justify-center bg-[#FEF7ED]">
       <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-        className="text-8xl mb-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className="bg-[#FEF7ED] rounded-3xl p-8 w-full max-w-2xl relative z-10 border border-white/30 flex flex-col items-center justify-center"
+        style={{ borderRadius: 0 }}
       >
-        🎉
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+          className="text-8xl mb-6"
+        >
+          🎉
+        </motion.div>
+
+        <h1 className="text-4xl font-bold text-black mb-4 sm:text-center text-left pl-6">
+          Registration Complete!
+        </h1>
+
+        <p className="text-xl text-black/70 mb-8 text-center">
+          {formData.isLocationSupported
+            ? "Welcome to the bichance community! We'll review your application and get back to you within 24-48 hours."
+            : "Thanks for your interest! We'll notify you as soon as we launch in your city."}
+        </p>
+
+        <motion.button
+          onClick={() => navigate("/dashboard")}
+          className="bg-gradient-to-r from-red-500 to-red-700 hover:from-black hover:to-gray-800 text-white px-12 py-4 rounded-full text-xl font-bold shadow-xl hover:shadow-2xl transition-all duration-300"
+          whileHover={{ scale: 1.05, y: -3 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          Finish
+        </motion.button>
       </motion.div>
-
-      <h1 className="text-4xl font-bold text-black mb-4">
-        Registration Complete!
-      </h1>
-
-      <p className="text-xl text-black/70 mb-8">
-        {formData.isLocationSupported
-          ? "Welcome to the bichance community! We'll review your application and get back to you within 24-48 hours."
-          : "Thanks for your interest! We'll notify you as soon as we launch in your city."}
-      </p>
-
-      <motion.button
-        onClick={() => navigate("/dashboard")}
-        className="bg-gradient-to-r from-red-500 to-red-700 text-white px-12 py-4 rounded-xl text-xl font-bold shadow-xl hover:shadow-2xl transition-all duration-300"
-        whileHover={{ scale: 1.05, y: -3 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        Finish
-      </motion.button>
-    </motion.div>
+    </div>
   );
 };
 
@@ -1990,6 +1970,7 @@ function PersonalityQuestionsStep({
 }) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState(formData.personalityAnswers || {});
+  const [isLoading, setIsLoading] = useState(false);
   const isLastQuestion =
     currentQuestionIndex === ONBOARDING_QUESTIONS.length - 1;
   const currentQuestion = ONBOARDING_QUESTIONS[currentQuestionIndex];
@@ -2017,22 +1998,23 @@ function PersonalityQuestionsStep({
 
   // Helper to send answer to journey/save API
   const saveJourneyAnswer = async (questionIdx, answer, questionText) => {
+    const token =
+      localStorage.getItem("access_token") ||
+      localStorage.getItem("auth_token") ||
+      sessionStorage.getItem("token");
     if (!token) {
-      console.error("No authentication token found");
-      toast.error("Authentication required. Please log in again.");
+      alert("Please log in again.");
+      // Optionally: window.location.href = "/auth";
       return;
     }
-
     // Convert answer to "yes"/"no"
     const answerText = answer === 1 ? "yes" : "no";
-
     try {
       const requestBody = {
         question_key: `q${questionIdx - 1}`,
         answer: answerText, // Use "yes" or "no"
         question: questionText,
       };
-
       // Additional validation - questionIdx is 1-indexed, we need 0-indexed
       const zeroBasedIndex = questionIdx - 1;
       if (zeroBasedIndex < 0 || zeroBasedIndex > 14) {
@@ -2044,7 +2026,6 @@ function PersonalityQuestionsStep({
         );
         throw new Error("Invalid question index");
       }
-
       // Special debug for first question
       if (questionIdx === 1) {
         console.log("First question debug:", {
@@ -2055,10 +2036,8 @@ function PersonalityQuestionsStep({
           requestBody,
         });
       }
-
       console.log("Sending journey save request:", requestBody);
-
-      const res = await fetch(
+      const res = await fetchWithAuth(
         "https://bichance-production-a30f.up.railway.app/api/v1/journey/save",
         {
           method: "POST",
@@ -2070,11 +2049,10 @@ function PersonalityQuestionsStep({
           body: JSON.stringify(requestBody),
         }
       );
-
+      handleLogoutOn401(res.status);
       // Log the actual response for debugging
       const responseText = await res.text();
       console.log("API Response:", res.status, responseText);
-
       if (!res.ok) {
         let errorData = {};
         try {
@@ -2090,7 +2068,6 @@ function PersonalityQuestionsStep({
           }`
         );
       }
-
       console.log("Journey answer saved successfully");
     } catch (err) {
       console.error("Journey save error:", err);
@@ -2141,9 +2118,11 @@ function PersonalityQuestionsStep({
   };
 
   const handleSubmitJourney = async () => {
+    setIsLoading(true);
     if (!token) {
       console.error("No authentication token found");
       toast.error("Authentication required. Please log in again.");
+      setIsLoading(false);
       return;
     }
 
@@ -2154,116 +2133,80 @@ function PersonalityQuestionsStep({
     console.log(
       "Answered questions:",
       answeredQuestions,
-      "Total questions:",
+      "of",
       totalQuestions
     );
-    console.log("Answers:", answers);
-
     if (answeredQuestions < totalQuestions) {
-      toast.error(
-        `Please answer all ${totalQuestions} questions before submitting`
-      );
+      toast.error("Please answer all questions");
+      setIsLoading(false);
       return;
     }
 
-    // Save last answer again in case user changed it but didn't click Yes/No after
-    await saveJourneyAnswer(
-      currentQuestion.id,
-      answers[currentQuestion.id],
-      currentQuestion.question
-    );
-
-    // Call journey/submit API
+    // Submit journey
     try {
-      const res = await fetch(
-        "https://bichance-production-a30f.up.railway.app/api/v1/journey/submit",
-        {
-          method: "POST",
-          headers: {
-            accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: "",
-        }
+      await saveJourneyAnswer(
+        currentQuestion.id,
+        answers[currentQuestion.id],
+        currentQuestion.question
       );
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        console.error("Journey submit failed:", res.status, errorData);
-        toast.error(
-          "Failed to submit journey: " + (errorData.detail || "Unknown error")
-        );
-        return;
-      }
-
-      const responseData = await res.json();
-      if (responseData.data && responseData.data.scores) {
-        const scores = responseData.data.scores;
-        const compatibilityScore = calculateCompatibilityScore(scores);
-        updateFormData({
-          personalityScores: scores,
-          compatibilityScore: compatibilityScore,
-        });
-        // Instead of toast, pass score to onNext
-        onNext(compatibilityScore);
-      } else {
-        onNext();
-      }
+      onNext();
     } catch (err) {
-      console.error("Journey submit error:", err);
       toast.error("Failed to submit journey: " + err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <motion.div
-      className="bg-white rounded-2xl shadow-lg px-12 py-16 max-w-2xl w-full flex flex-col items-center border border-black/20 min-h-[800px] mx-auto relative"
-      style={{ backgroundColor: "#FFFFCC" }}
+      className="fixed inset-0 z-50 flex flex-col w-screen h-screen min-h-screen bg-[#FEF7ED] shadow-none p-0 border-0 border-black/20 overflow-y-auto"
+      style={{ borderRadius: 0 }}
     >
-      <button
-        onClick={handlePrevious}
-        className="absolute left-4 top-4 text-black hover:text-gray-700 text-2xl font-bold focus:outline-none"
-      >
-        ←
-      </button>
-      <div className="font-bold text-2xl md:text-3xl text-black text-center mb-2"></div>
-      <div className="italic text-lg md:text-xl font-serif text-center mb-4">
-        PERSONALITY <span className="not-italic">QUESTIONS</span>
+      <div className="w-full pt-8 pb-2 bg-[#FEF7ED] sticky top-0 z-40">
+        <button
+          onClick={handlePrevious}
+          className="absolute left-4 top-4 text-black hover:text-gray-700 text-2xl font-bold focus:outline-none"
+          aria-label="Back"
+        >
+          <span className="fi fi-rs-arrow-alt-circle-left"></span>
+        </button>
+        <div className="italic text-lg md:text-xl font-serif w-full text-center mt-2 mb-1">
+          PERSONALITY <span className="not-italic">QUESTIONS</span>
+        </div>
+        <div className="w-full text-center text-gray-700 mb-2">
+          Answer honestly to help us match you better
+        </div>
       </div>
-      <div className="text-center text-gray-700 mb-6">
-        Answer honestly to help us match you better
-      </div>
-      <div className="w-full mb-6">
-        <div className="bg-black/10 rounded-full h-2 overflow-hidden">
+      {/* Progress bar above the question */}
+      <div className="w-full mb-4">
+        <div className="bg-black/10 rounded-full h-2 overflow-hidden max-w-xs mx-auto w-full">
           <div
             style={{
-              width: `${
-                ((currentQuestionIndex + 1) / ONBOARDING_QUESTIONS.length) * 100
-              }%`,
+              width: `${((currentQuestionIndex + 1) / ONBOARDING_QUESTIONS.length) * 100}%`,
             }}
             className="h-full bg-black transition-all duration-300"
           />
         </div>
-        <div className="flex justify-between text-black text-xs mt-1">
+        <div className="flex justify-between text-black text-xs mt-1 max-w-xs mx-auto w-full">
           <span>Q {currentQuestionIndex + 1}</span>
           <span>{ONBOARDING_QUESTIONS.length} Questions</span>
         </div>
       </div>
       <h2
-        className="font-bold text-2xl md:text-3xl text-black text-center mb-8 tracking-wide"
+        className="font-bold text-2xl md:text-3xl text-black text-center mt-0 mb-1 tracking-wide break-words px-4 w-full max-w-[90vw] md:max-w-xl mx-auto"
         style={{
           fontFamily: "AmstelvarAlpha, sans-serif",
           fontStyle: "normal",
         }}
       >
-        {currentQuestion.question}
+        {currentQuestion.question}? 
       </h2>
       {isLastQuestion ? (
         <>
-          <div className="flex gap-8 w-full max-w-xs mx-auto mb-8">
+          <div className="flex flex-col gap-4 w-full max-w-xs mx-auto mb-8 mt-4">
             <button
               onClick={() => handleSelect(1)}
-              className={`w-1/2 py-6 rounded-2xl border-2 text-xl font-bold shadow transition-all text-center
+              className={`w-full py-6 rounded-2xl border-2 text-xl font-bold shadow transition-all text-center
                 ${
                   answers[currentQuestion.id] === 1
                     ? "bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105"
@@ -2274,7 +2217,7 @@ function PersonalityQuestionsStep({
             </button>
             <button
               onClick={() => handleSelect(0)}
-              className={`w-1/2 py-6 rounded-2xl border-2 text-xl font-bold shadow transition-all text-center
+              className={`w-full py-6 rounded-2xl border-2 text-xl font-bold shadow transition-all text-center
                 ${
                   answers[currentQuestion.id] === 0
                     ? "bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105"
@@ -2286,17 +2229,22 @@ function PersonalityQuestionsStep({
           </div>
           <button
             onClick={handleSubmitJourney}
-            className="w-full max-w-xs mx-auto py-6 rounded-2xl border-2 text-xl font-bold shadow bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105 transition-all text-center mt-2"
-            disabled={answers[currentQuestion.id] === undefined}
+            className="mx-auto mt-2 flex items-center justify-center w-56 py-3 rounded-full border-2 font-bold shadow bg-gradient-to-r from-red-500 to-red-700 hover:from-black hover:to-gray-800 text-white border-red-600 scale-105 transition-all text-center disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ minWidth: '140px', maxWidth: '220px' }}
+            disabled={answers[currentQuestion.id] === undefined || isLoading}
           >
-            Submit Journey
+            {isLoading ? (
+              <span className="text-lg">Submitting...</span>
+            ) : (
+              <span className="text-lg font-bold">Submit Journey</span>
+            )}
           </button>
         </>
       ) : (
-        <div className="flex gap-8 w-full max-w-xs mx-auto mb-8">
+        <div className="flex flex-col gap-4 w-full max-w-xs mx-auto mb-8 mt-4">
           <button
             onClick={() => handleSelect(1)}
-            className={`w-1/2 py-6 rounded-2xl border-2 text-xl font-bold shadow transition-all text-center
+            className={`w-full py-6 rounded-2xl border-2 text-xl font-bold shadow transition-all text-center
               ${
                 answers[currentQuestion.id] === 1
                   ? "bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105"
@@ -2307,7 +2255,7 @@ function PersonalityQuestionsStep({
           </button>
           <button
             onClick={() => handleSelect(0)}
-            className={`w-1/2 py-6 rounded-2xl border-2 text-xl font-bold shadow transition-all text-center
+            className={`w-full py-6 rounded-2xl border-2 text-xl font-bold shadow transition-all text-center
               ${
                 answers[currentQuestion.id] === 0
                   ? "bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105"
@@ -2318,6 +2266,10 @@ function PersonalityQuestionsStep({
           </button>
         </div>
       )}
+      {/* Place this at the very end of the motion.div, after all question content */}
+      <div className="w-full flex justify-center bg-[#FEF7ED] mt-24 pb-4">
+        <img src="/QA.png" alt="Dinner conversation illustration" className="w-full max-w-md rounded-xl" />
+      </div>
     </motion.div>
   );
 }
@@ -2338,11 +2290,12 @@ function IdentityQuestionsStep({ formData, updateFormData, onNext, onBack }) {
       localStorage.getItem("auth_token") ||
       sessionStorage.getItem("token");
     if (!token) {
-      console.error("No authentication token found");
+      alert("Please log in again.");
+      // Optionally: window.location.href = "/auth";
       return;
     }
     try {
-      const res = await fetch(
+      const res = await fetchWithAuth(
         "https://bichance-production-a30f.up.railway.app/api/v1/users/me",
         {
           method: "GET",
@@ -2352,6 +2305,7 @@ function IdentityQuestionsStep({ formData, updateFormData, onNext, onBack }) {
           },
         }
       );
+      handleLogoutOn401(res.status);
       if (res.ok) {
         const userData = await res.json();
         console.log("Fetched user data after identity questions:", userData);
@@ -2425,92 +2379,112 @@ function IdentityQuestionsStep({ formData, updateFormData, onNext, onBack }) {
 
   return (
     <motion.div
-      className="bg-white rounded-2xl shadow-lg px-12 py-16 max-w-2xl w-full flex flex-col items-center border border-black/20 min-h-[800px] mx-auto relative"
-      style={{ backgroundColor: "#FFFFCC" }}
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center w-screen h-screen min-h-screen bg-[#FEF7ED] shadow-none p-0 pt-4 border-0 border-black/20 overflow-y-auto"
+      style={{ borderRadius: 0 }}
     >
-      {/* Bold, attractive back arrow at top left */}
       <button
         onClick={handlePrevious}
-        className="absolute left-4 top-4 text-black text-3xl font-extrabold focus:outline-none z-20 hover:scale-110 transition-transform"
+        className="absolute left-16 top-4 text-black text-3xl font-extrabold focus:outline-none z-20 hover:scale-110 transition-transform"
+        aria-label="Back"
       >
-        ←
+        <span className="fi fi-rs-arrow-alt-circle-left"></span>
       </button>
-      {/* Italic heading above progress bar */}
       <div className="italic text-lg md:text-xl font-serif text-center mb-4 mt-2">
         IDENTITY <span className="not-italic">QUESTIONS</span>
       </div>
-      {/* Step bar */}
-      <div className="w-full mb-6">
-        <div className="bg-black/10 rounded-full h-2 overflow-hidden">
+      <div className="w-full mb-6 flex items-center justify-center gap-2">
+        <span className="text-black text-xs font-semibold" style={{ minWidth: 32 }}>Q {current + 1}</span>
+        <div
+          className="rounded-full h-2 overflow-hidden"
+          style={{
+            width: '100%',
+            maxWidth: '300px',
+            background: '#FEF7ED',
+            ...(window.innerWidth < 640
+              ? { width: '70%', maxWidth: '120px', background: '#FEF7ED' }
+              : {}),
+          }}
+        >
           <div
             style={{ width: `${progress}%` }}
             className="h-full bg-black transition-all duration-300"
           />
         </div>
-        <div className="flex justify-between text-black text-xs mt-1">
-          <span>Q {current + 1}</span>
-          <span>{questions.length} Steps</span>
-        </div>
+        <span className="text-black text-xs font-semibold" style={{ minWidth: 60, textAlign: 'right' }}>{questions.length} Steps</span>
       </div>
       <h2 className="text-lg sm:text-xl font-semibold text-black mb-6 mt-2 text-center w-full">
         {currentQ.question}
       </h2>
-      <div className="flex flex-col gap-4 w-full max-w-md mb-8">
-        {currentQ.options ? (
-          currentQ.options.map((opt) => (
-            <motion.button
-              key={opt}
-              onClick={() => {
-                if (isLast) {
-                  // Only select, do not auto-advance
-                  const newAnswers = { ...answers, [currentQ.id]: opt };
-                  setAnswers(newAnswers);
-                  updateFormData({ identityAnswers: newAnswers });
-                } else {
-                  setDobError("");
-                  handleSelect(opt);
-                }
-              }}
-              className={`w-full py-8 rounded-xl border-2 text-xl font-semibold shadow transition-all text-center ${
-                answers[currentQ.id] === opt
-                  ? "bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105 font-extrabold"
-                  : "border-gray-300 hover:border-red-400 hover:bg-red-50"
-              }`}
-              style={{ transition: "all 0.2s cubic-bezier(0.4,0,0.2,1)" }}
-              whileHover={{ scale: 1.07 }}
-              whileTap={{ scale: 0.98 }}
+      <div className="relative w-full max-w-md flex-1" style={{ minHeight: '220px' }}>
+        <div
+          className="flex flex-col gap-4 w-full h-full mb-8"
+          style={{
+            backgroundImage: 'url(/id2.png)',
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'center bottom',
+            backgroundSize: 'contain',
+            minHeight: window.innerWidth >= 768 ? '400px' : '320px',
+            paddingBottom: window.innerWidth >= 768 ? '180px' : '120px',
+            opacity: 1,
+          }}
+        >
+          {currentQ.options ? (
+            currentQ.options.map((opt) => (
+              <motion.button
+                key={opt}
+                onClick={() => {
+                  if (isLast) {
+                    // Only select, do not auto-advance
+                    const newAnswers = { ...answers, [currentQ.id]: opt };
+                    setAnswers(newAnswers);
+                    updateFormData({ identityAnswers: newAnswers });
+                  } else {
+                    setDobError("");
+                    handleSelect(opt);
+                  }
+                }}
+                className={`w-2/3 max-w-xs mx-auto py-4 rounded-lg border-2 text-base font-semibold shadow transition-all text-center ${
+                  answers[currentQ.id] === opt
+                    ? "bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105 font-extrabold"
+                    : "border-gray-300 hover:border-red-400 hover:bg-red-50"
+                }`}
+                style={{ transition: "all 0.2s cubic-bezier(0.4,0,0.2,1)" }}
+                whileHover={{ scale: 1.07 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <span className="font-bold text-base tracking-wide">
+                  {opt}
+                </span>
+              </motion.button>
+            ))
+          ) : (
+            <>
+              <input
+                type="date"
+                className="w-full py-4 px-4 rounded-xl border-2 text-xl font-semibold shadow transition-all text-center border-gray-300 hover:border-red-400 focus:border-red-600 focus:outline-none"
+                value={answers[currentQ.id] || ""}
+                onChange={handleDateChange}
+                placeholder="YYYY-MM-DD"
+                max={new Date().toISOString().split("T")[0]}
+              />
+              {isDobInvalid && (
+                <div className="text-red-600 text-center font-bold mt-2">
+                  {dobError}
+                </div>
+              )}
+            </>
+          )}
+          {isLast && (
+            <button
+              onClick={handleSubmitIdentity}
+              className="mx-auto mt-2 flex items-center justify-center w-56 py-3 rounded-full border-2 font-bold shadow bg-gradient-to-r from-red-500 to-red-700 hover:from-black hover:to-gray-800 text-white border-red-600 scale-105 transition-all text-center disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ minWidth: '140px', maxWidth: '220px' }}
+              disabled={isSubmitDisabled}
             >
-              <span className="font-bold text-lg md:text-xl tracking-wide">
-                {opt}
-              </span>
-            </motion.button>
-          ))
-        ) : (
-          <>
-            <input
-              type="date"
-              className="w-full py-4 px-4 rounded-xl border-2 text-xl font-semibold shadow transition-all text-center border-gray-300 hover:border-red-400 focus:border-red-600 focus:outline-none"
-              value={answers[currentQ.id] || ""}
-              onChange={handleDateChange}
-              placeholder="YYYY-MM-DD"
-              max={new Date().toISOString().split("T")[0]}
-            />
-            {isDobInvalid && (
-              <div className="text-red-600 text-center font-bold mt-2">
-                {dobError}
-              </div>
-            )}
-          </>
-        )}
-        {isLast && (
-          <button
-            onClick={handleSubmitIdentity}
-            className="w-full max-w-xs mx-auto py-6 rounded-2xl border-2 text-xl font-bold shadow bg-gradient-to-r from-red-500 to-red-700 text-white border-red-600 scale-105 transition-all text-center mt-2"
-            disabled={isSubmitDisabled}
-          >
-            Submit Identity
-          </button>
-        )}
+              <span className="text-lg font-bold">Submit Identity</span>
+            </button>
+          )}
+        </div>
       </div>
     </motion.div>
   );
@@ -2518,8 +2492,8 @@ function IdentityQuestionsStep({ formData, updateFormData, onNext, onBack }) {
 
 // Add StrangerPossibilityResultStep (score/result container, orange background, no progress bar)
 function StrangerPossibilityResultStep({ formData, score, onNext, onBack }) {
-  const displayScore =
-    typeof score === "number" ? score : formData.compatibilityScore ?? 0;
+  // Always animate to a random score between 91 and 100
+  const [displayScore] = React.useState(() => Math.floor(Math.random() * 10) + 91);
   const [animatedScore, setAnimatedScore] = React.useState(0);
 
   React.useEffect(() => {
@@ -2545,24 +2519,25 @@ function StrangerPossibilityResultStep({ formData, score, onNext, onBack }) {
 
   return (
     <div
-      className="min-h-screen flex flex-col justify-center items-center relative"
-      style={{ background: "#FF5A36" }}
+      className="fixed inset-0 z-50 flex flex-col items-center w-full min-h-0 bg-[#FF5A36] shadow-none p-0 pt-4 sm:relative sm:inset-auto sm:z-10 sm:px-12 sm:py-16 sm:max-w-2xl sm:min-h-screen sm:shadow-none border-0 sm:border border-black/20 mx-auto overflow-y-auto h-screen min-h-screen"
+      style={{ borderRadius: 0 }}
     >
       {/* Back Arrow at top left of parent container */}
       <button
         onClick={onBack}
-        className="absolute left-6 top-6 text-white text-4xl font-extrabold focus:outline-none z-30 hover:scale-110 transition-transform"
+        className="absolute left-6 top-6 text-black text-4xl font-extrabold focus:outline-none z-30 hover:scale-110 transition-transform"
+        aria-label="Back"
       >
-        ←
+        <span className="fi fi-rs-arrow-alt-circle-left"></span>
       </button>
       <div className="flex-1 flex flex-col justify-center items-center w-full">
-        <div className="bg-[#FF5A36] rounded-2xl px-10 py-12 max-w-md w-full flex flex-col items-center relative">
+        <div className="bg-white rounded-2xl px-10 py-12 max-w-md w-full flex flex-col items-center shadow-xl">
           <div className="flex items-center justify-center mb-2 w-full mt-2">
-            <span className="text-6xl md:text-7xl font-extrabold text-white tracking-tight">
+            <span className="text-6xl md:text-7xl font-extrabold text-black tracking-tight">
               {animatedScore}%
             </span>
           </div>
-          <div className="text-center text-white text-lg font-bold mt-2">
+          <div className="text-center text-black text-lg font-bold mt-2">
             The possibility (based on your personality) of meeting new strangers
             at our dinners
           </div>
@@ -2571,7 +2546,7 @@ function StrangerPossibilityResultStep({ formData, score, onNext, onBack }) {
       <div className="w-full max-w-md px-4 pb-8">
         <button
           onClick={onNext}
-          className="w-full bg-black text-white rounded-full py-4 text-lg font-bold mt-8 shadow-lg hover:bg-gray-900 transition-all"
+          className="w-full max-w-md bg-black text-white rounded-full py-4 px-12 text-lg font-bold mt-8 shadow-lg hover:bg-gray-900 transition-all ml-auto"
         >
           Next
         </button>
@@ -2587,7 +2562,8 @@ const saveJourneyField = async (question_key, answer, questionText) => {
     localStorage.getItem("auth_token") ||
     sessionStorage.getItem("token");
   if (!token) {
-    console.error("No authentication token found");
+    alert("Please log in again.");
+    // Optionally: window.location.href = "/auth";
     return;
   }
   try {
@@ -2596,7 +2572,7 @@ const saveJourneyField = async (question_key, answer, questionText) => {
       answer: answer?.toString?.() ?? "",
       question: questionText,
     };
-    const res = await fetch(
+    const res = await fetchWithAuth(
       "https://bichance-production-a30f.up.railway.app/api/v1/journey/save",
       {
         method: "POST",
@@ -2621,3 +2597,92 @@ const saveJourneyField = async (question_key, answer, questionText) => {
     toast.error("Failed to save: " + question_key);
   }
 };
+
+// Utility to handle logout on 401
+function handleLogoutOn401(status) {
+  if (status === 401) {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
+    alert("Session expired. Please log in again.");
+    window.location.href = "/auth";
+  }
+}
+
+function SlideToSendOTP({ onSlide, loading, disabled, countdown, label }) {
+  const [slide, setSlide] = React.useState(0);
+  const [sliding, setSliding] = React.useState(false);
+  const sliderRef = useRef(null);
+  React.useEffect(() => {
+    if (!loading && countdown === 0) setSlide(0);
+  }, [loading, countdown]);
+  const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
+  const handleMouseDown = (e) => {
+    if (disabled) return;
+    if (isDesktop) {
+      setSlide(100);
+      setTimeout(() => {
+        onSlide({ preventDefault: () => {} });
+        setSlide(0);
+      }, 250);
+    } else {
+      setSliding(true);
+    }
+  };
+  const handleMouseUp = (e) => {
+    if (!sliding) return;
+    setSliding(false);
+    if (slide > 80) {
+      onSlide({ preventDefault: () => {} });
+    } else {
+      setSlide(0);
+    }
+  };
+  const handleMouseMove = (e) => {
+    if (!sliding) return;
+    const rect = sliderRef.current.getBoundingClientRect();
+    let x = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+    let percent = ((x - rect.left) / rect.width) * 100;
+    percent = Math.max(0, Math.min(100, percent));
+    setSlide(percent);
+  };
+  return (
+    <div
+      ref={sliderRef}
+      className={`relative w-full h-12 bg-black rounded-full overflow-hidden select-none mt-2 shadow-lg ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => setSliding(false)}
+      onTouchStart={handleMouseDown}
+      onTouchEnd={handleMouseUp}
+      onTouchMove={handleMouseMove}
+      style={{ userSelect: 'none' }}
+    >
+      <div
+        className="absolute top-0 left-0 h-full bg-gradient-to-r from-red-500 to-red-700 transition-all duration-200"
+        style={{ width: `${slide}%` }}
+      />
+      <div
+        className="absolute top-0 left-0 h-full flex items-center justify-center w-full z-10 pointer-events-none overflow-visible"
+      >
+        {loading ? (
+          <span className="text-white font-semibold text-sm whitespace-nowrap">{label === 'Verify OTP' ? 'Verifying...' : 'Sending OTP...'}</span>
+        ) : countdown > 0 ? (
+          <span className="text-white font-semibold text-sm whitespace-nowrap">Wait {countdown}s</span>
+        ) : slide > 80 ? (
+          <span className="text-white font-semibold text-sm whitespace-nowrap">Release to {label}</span>
+        ) : (
+          <span className="text-white font-semibold text-sm tracking-wider whitespace-nowrap">SWIPE TO {label.toUpperCase()}</span>
+        )}
+      </div>
+      <div
+        className="absolute top-1 left-1 h-10 w-10 bg-gradient-to-r from-red-500 to-red-700 rounded-full shadow flex items-center justify-center z-20 transition-transform duration-200"
+        style={{ transform: `translateX(${slide * (sliderRef.current ? sliderRef.current.offsetWidth - 48 : 0) / 100}px)` }}
+      >
+        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+      </div>
+    </div>
+  );
+}

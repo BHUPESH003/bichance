@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { fetchWithAuth } from '../lib/fetchWithAuth';
 
 const initialState = {
   email: null || localStorage.getItem("email"),
@@ -51,10 +52,10 @@ export const { login, logout, updateUser, setToken } = authSlice.actions;
 // Thunk for fetching current user
 export const fetchCurrentUser = () => async (dispatch, getState) => {
   const { access_token } = getState().auth;
-  if (!token) return;
+  if (!access_token) return;
 
   try {
-    const response = await fetch(
+    const response = await fetchWithAuth(
       "https://bichance-production-a30f.up.railway.app/api/v1/users/me",
       {
         method: "GET",

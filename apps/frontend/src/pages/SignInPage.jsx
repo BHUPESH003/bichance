@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { login, fetchCurrentUser } from '../store/authSlice';
 import toast from 'react-hot-toast';
+import { fetchWithAuth } from '../lib/fetchWithAuth';
 
 const SignInPage = () => {
   const [email, setEmail] = useState('');
@@ -23,7 +24,7 @@ const SignInPage = () => {
     setLoading(true);
     try {
       // Replace with your real API call
-      const response = await fetch('https://bichance-production-a30f.up.railway.app/api/v1/auth/login', {
+      const response = await fetchWithAuth('https://bichance-production-a30f.up.railway.app/api/v1/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

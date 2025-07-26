@@ -6,6 +6,7 @@ import {
   TrendingUp, Target, Zap, Clock, CheckCircle,
   AlertTriangle, Download, Filter, Calendar
 } from 'lucide-react';
+import { fetchWithAuth } from './lib/fetchWithAuth';
 
 const API_BASE_URL = (import.meta.env.VITE_BACKEND_URL || 'https://bichance-production-a30f.up.railway.app');
 
@@ -24,7 +25,7 @@ export function MatchmakingPanel() {
   const fetchMatchmakingConfigs = async () => {
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(`${API_BASE_URL}/admin/matchmaking/configs`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}/admin/matchmaking/configs`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -41,7 +42,7 @@ export function MatchmakingPanel() {
   const fetchDinnerEvents = async () => {
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(`${API_BASE_URL}/api/dinners`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}/api/dinners`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -59,7 +60,7 @@ export function MatchmakingPanel() {
   const runMatchmaking = async (dinnerEventId) => {
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(`${API_BASE_URL}/admin/matchmaking/run`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}/admin/matchmaking/run`, {
         method: 'POST',
         headers: { 
           'Authorization': `Bearer ${token}`,
@@ -258,7 +259,7 @@ export function AnalyticsDashboard() {
   const fetchAnalytics = async () => {
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(`${API_BASE_URL}/admin/dashboard/metrics?days=${dateRange}`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}/admin/dashboard/metrics?days=${dateRange}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -472,7 +473,7 @@ export function ReportsPanel() {
   const fetchReports = async () => {
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(`${API_BASE_URL}/admin/reports`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}/admin/reports`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 

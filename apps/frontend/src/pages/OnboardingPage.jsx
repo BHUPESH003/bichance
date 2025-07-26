@@ -47,10 +47,10 @@ const OnboardingPage = () => {
   };
 
   return (
-    <div className="min-h-screen fade-in-up">
-      <h1 className="text-3xl font-bold text-red-600 text-center my-8">
-        Onboarding
-      </h1>
+    <div className="min-h-screen bg-[#FEF7ED] fade-in-up overflow-x-hidden">
+      {/* <h1 className="text-3xl font-bold text-red-600 text-center my-8"> */}
+        
+      {/* </h1> */}
       <ExclusiveOnboarding
         onComplete={handleOnboardingComplete}
         onBack={() => navigate("/auth")}

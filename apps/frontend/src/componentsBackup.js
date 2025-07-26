@@ -10,6 +10,7 @@ import {
   Mail, Lock, Eye, EyeOff, Upload, Check, TrendingUp,
   Activity, CalendarDays, Crown, AlertCircle
 } from 'lucide-react';
+import { fetchWithAuth } from './lib/fetchWithAuth';
 
 const API_BASE_URL = (process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001') + '/api';
 
@@ -31,7 +32,7 @@ export function AuthProvider({ children }) {
 
   const fetchCurrentUser = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}/auth/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -55,7 +56,7 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -80,7 +81,7 @@ export function AuthProvider({ children }) {
 
   const register = async (email, password, name) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -279,7 +280,7 @@ export function OnboardingFlow() {
 
   const fetchDistricts = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/districts`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}/districts`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -420,7 +421,7 @@ function PersonalityAssessment({ onNext, data }) {
 
   const handleSubmit = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/assessment/submit`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}/assessment/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -834,7 +835,7 @@ function ProfileCreation({ onNext, onBack, data, token, refreshUser, isLastStep 
         }
       };
 
-      const response = await fetch(`${API_BASE_URL}/profile/update`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}/profile/update`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -983,14 +984,14 @@ export function Dashboard() {
       const headers = { 'Authorization': `Bearer ${token}` };
 
       // Fetch available dinners
-      const dinnersResponse = await fetch(`${API_BASE_URL}/dinners`, { headers });
+      const dinnersResponse = await fetchWithAuth(`${API_BASE_URL}/dinners`, { headers });
       if (dinnersResponse.ok) {
         const dinnersData = await dinnersResponse.json();
         setDinners(dinnersData);
       }
 
       // Fetch user's dinner participations
-      const userDinnersResponse = await fetch(`${API_BASE_URL}/users/my-dinners`, { headers });
+      const userDinnersResponse = await fetchWithAuth(`${API_BASE_URL}/users/my-dinners`, { headers });
       if (userDinnersResponse.ok) {
         const userDinnersData = await userDinnersResponse.json();
         const upcoming = userDinnersData.filter(d => new Date(d.date) > new Date());
@@ -1000,7 +1001,7 @@ export function Dashboard() {
       }
 
       // Fetch subscription status
-      const subResponse = await fetch(`${API_BASE_URL}/users/subscription-status`, { headers });
+      const subResponse = await fetchWithAuth(`${API_BASE_URL}/users/subscription-status`, { headers });
       if (subResponse.ok) {
         const subData = await subResponse.json();
         setSubscriptionStatus(subData);

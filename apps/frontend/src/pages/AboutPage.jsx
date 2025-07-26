@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import MobileNavBar from '../components/common/MobileNavBar';
 import FooterNav from '../components/common/FooterNav';
+import Footer from '../components/common/Footer';
+import MainNav from '../components/common/MainNav';
 
-const AboutPage = () => {
+export default function AboutPage() {
   const navigate = useNavigate();
   
   const stats = [
@@ -60,54 +62,10 @@ const AboutPage = () => {
 
   return (
     <>
-      <MobileNavBar />
-      <div className="min-h-screen bg-white">
-        {/* Navigation */}
-        <motion.nav 
-          className="bg-white/95 backdrop-blur-md border-b border-red-100 shadow-sm fixed w-full z-50"
-          initial={{ y: -100 }}
-          animate={{ y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-        >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <motion.div 
-                className="flex items-center"
-                whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.2 }}
-              >
-                <img src="/l1.png" alt="bichance logo" style={{ width: 140, height: 60, objectFit: 'cover', marginLeft: 0, marginRight: 4, cursor: 'pointer' }} onClick={() => navigate('/')} />
-              </motion.div>
-              <div className="flex items-center space-x-8">
-                <motion.button 
-                  onClick={() => navigate('/')} 
-                  className="text-gray-700 hover:text-red-600 font-medium transition-colors duration-300"
-                  whileHover={{ scale: 1.05 }}
-                >
-                  Home
-                </motion.button>
-                <motion.button 
-                  onClick={() => navigate('/blog')} 
-                  className="text-gray-700 hover:text-red-600 font-medium transition-colors duration-300"
-                  whileHover={{ scale: 1.05 }}
-                >
-                  Blog
-                </motion.button>
-                <motion.button 
-                  onClick={() => navigate('/auth?mode=signup')}
-                  className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-2 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Join Now
-                </motion.button>
-              </div>
-            </div>
-          </div>
-        </motion.nav>
-
+      <MainNav />
+      <div style={{ padding: 0 }} className="bg-[#FEF7ED]">
         {/* Hero Section */}
-        <section className="pt-24 pb-16 bg-white fade-in-up">
+        <section className="pt-24 pb-16 bg-[#FEF7ED] fade-in-up">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div 
               className="text-center max-w-4xl mx-auto"
@@ -125,7 +83,7 @@ const AboutPage = () => {
                 Free-fall into social possibilities without digital screens. Open up to the people around you without expectations. Start a conversation, spark a connection. Go out for a dinner with strangers.<br /><br />
                 <span className="text-xl md:text-2xl font-semibold text-red-500">Take a chance, have a seat. And just say,</span>
               </p>
-              <button className="bg-red-200 hover:bg-red-400 text-red-900 font-bold px-8 py-3 rounded-full shadow transition-all text-lg mt-4" onClick={() => navigate('/auth?mode=signup')}>
+              <button className="bg-red-200 hover:bg-black hover:text-white text-red-900 font-bold px-8 py-3 rounded-full shadow transition-all text-lg mt-4" onClick={() => navigate('/auth?mode=signup')}>
                 &quot;HELLO STRANGER&quot;
               </button>
             </motion.div>
@@ -133,7 +91,7 @@ const AboutPage = () => {
         </section>
 
         {/* Values Section */}
-        <section className="py-20 bg-white">
+        <section className="py-20 bg-[#FEF7ED]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div 
               className="text-center mb-16"
@@ -196,7 +154,7 @@ const AboutPage = () => {
               </p>
               <motion.button 
                 onClick={() => navigate('/auth?mode=signup')}
-                className="bg-white text-red-600 px-8 py-3 rounded-full text-lg font-semibold shadow-2xl hover:shadow-3xl transition-all duration-300 hover:bg-gray-50"
+                className="bg-white text-red-600 px-8 py-3 rounded-full text-lg font-semibold shadow-2xl hover:shadow-3xl transition-all duration-300 hover:bg-black hover:text-white"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -207,10 +165,8 @@ const AboutPage = () => {
         </section>
 
         {/* Footer */}
-        <FooterNav />
+        <Footer />
       </div>
     </>
   );
-};
-
-export default AboutPage;
+}
